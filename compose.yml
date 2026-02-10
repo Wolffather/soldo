@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+
+  postgres:
+    image: postgres:14.8
+    container_name: my_postgres
+    environment:
+      POSTGRES_DB: soldo_db
+      POSTGRES_USER: app_user
+      POSTGRES_PASSWORD: app_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+  # Zookeeper (необходим для Kafka)
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper-server
+    environment:
+      ALLOW_ANONYMOUS_LOGIN: "yes"
+      ZOOKEEPER_CLIENT_PORT: 2181
+    ports:
+      - "2181:2181"
+    volumes:
+      - zookeeper-data:/confluentinc/zookeeper
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  # Kafka
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka-broker
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1  # для одноузлового Kafka
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+    volumes:
+      - kafka-data:/confluentinc/kafka
+    networks:
+      - app-network
+    restart: unless-stopped
+
+# Объёмы (volumes) для сохранения данных
+volumes:
+  postgres_data:
+  zookeeper-data:
+  kafka-data:
+
+# Сеть
+networks:
+  app-network:
+    driver: bridge
