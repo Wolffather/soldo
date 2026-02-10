@@ -4,12 +4,13 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.savvy.soldo.enums.UserRole;
+import ru.savvy.soldo.exception.NotFoundException;
+import ru.savvy.soldo.exception.RoleAlreadyExistsException;
 import ru.savvy.soldo.model.User;
 import ru.savvy.soldo.repository.UserRepository;
 import ru.savvy.soldo.service.UserService;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -31,9 +32,13 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public User grantAdminRole(String username) {
        User user =  repository.findByUsername(username)
-               .orElseThrow(() -> new RuntimeException(String.format(String.format("Не найден пользователь с username=%s", username))));
-       user.getRoles().add(UserRole.ROLE_ADMIN);
-       return repository.save(user);
+               .orElseThrow(() -> new NotFoundException(String.format(String.format("Не найден пользователь с username=%s", username))));
+       if (user.hasRole(UserRole.ROLE_ADMIN)) {
+           throw new RoleAlreadyExistsException(String.format(String.format("Уже выданы права админа пользователю с username=%s", username)));
+       } else {
+           user.addRole(UserRole.ROLE_ADMIN);
+           return repository.save(user);
+       }
     }
 
     @Override

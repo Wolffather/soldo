@@ -30,4 +30,12 @@ public class User {
 
     @Column(name = "roles")
     private List<UserRole> roles;
+
+    public boolean hasRole(UserRole userRole) {
+        return this.getRoles().contains(userRole);
+    }
+
+    public void addRole(UserRole userRole) {
+        this.getRoles().add(userRole);
+    }
 }
