@@ -39,8 +39,9 @@ compose.yml
 src/main/resources/application.yaml
 
 ### Liquibase ###
-
-*.yml
 *.properties
 *.flow
 example-changelog.sql
+
+# OS generated files
+.DS_Store
