@@ -31,3 +31,16 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Docker ###
+compose.yml
+
+### Application properties ###
+src/main/resources/application.yaml
+
+### Liquibase ###
+
+*.yml
+*.properties
+*.flow
+example-changelog.sql

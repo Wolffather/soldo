@@ -12,19 +12,22 @@ import java.util.List;
 @RestController
 @RequestMapping("/events")
 public class EventController {
-    @Autowired
-    private EventServiceImpl service;
+    private final EventServiceImpl service;
+
     @Autowired
     private EventMapper mapper;
 
-
+    @Autowired
+    public EventController(EventServiceImpl service) {
+        this.service = service;
+    }
 
     @GetMapping
     public List<Event> getAll() {
         return service.getAllEvents();
     }
 
-    @PostMapping
+    @PostMapping("/create")
     public Event create(@RequestBody EventDTO eventDTO) {
         Event event = mapper.dtoToEntity(eventDTO);
         return service.saveEvent(event);

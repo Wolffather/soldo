@@ -29,13 +29,13 @@ public class User {
     private String password;
 
     @Column(name = "roles")
-    private List<UserRole> roles;
+    private List<String> roles;
 
     public boolean hasRole(UserRole userRole) {
-        return this.getRoles().contains(userRole);
+        return this.getRoles().contains(userRole.name());
     }
 
     public void addRole(UserRole userRole) {
-        this.getRoles().add(userRole);
+        this.getRoles().add(userRole.name());
     }
 }

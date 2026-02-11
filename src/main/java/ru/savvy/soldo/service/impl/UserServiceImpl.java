@@ -32,9 +32,9 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public User grantAdminRole(String username) {
        User user =  repository.findByUsername(username)
-               .orElseThrow(() -> new NotFoundException(String.format(String.format("Не найден пользователь с username=%s", username))));
+               .orElseThrow(() -> new NotFoundException(String.format("Не найден пользователь с username=%s", username)));
        if (user.hasRole(UserRole.ROLE_ADMIN)) {
-           throw new RoleAlreadyExistsException(String.format(String.format("Уже выданы права админа пользователю с username=%s", username)));
+           throw new RoleAlreadyExistsException(String.format("Уже выданы права админа пользователю с username=%s", username));
        } else {
            user.addRole(UserRole.ROLE_ADMIN);
            return repository.save(user);

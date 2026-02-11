@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import ru.savvy.soldo.dto.UserDTO;
 import ru.savvy.soldo.mapper.UserMapper;
-import ru.savvy.soldo.model.Event;
 import ru.savvy.soldo.model.User;
 import ru.savvy.soldo.service.impl.UserServiceImpl;
 
@@ -13,10 +12,15 @@ import java.util.List;
 @RestController
 @RequestMapping("/users")
 public class UserController {
-    @Autowired
-    private UserServiceImpl service;
+
+    private final UserServiceImpl service;
     @Autowired
     private UserMapper mapper;
+
+    @Autowired
+    public UserController(UserServiceImpl service) {
+        this.service = service;
+    }
 
     @GetMapping
     public List<User> getAllUsers() {
@@ -29,8 +33,8 @@ public class UserController {
         return service.createUser(user);
     }
 
-    @PutMapping("/grant-admin-role")
-    public User grantAdminRole(@RequestBody String username) {
+    @PatchMapping("/grant-admin-role/{username}")
+    public User grantAdminRole(@PathVariable("username") String username) {
         return service.grantAdminRole(username);
     }
 }

@@ -35,12 +35,6 @@
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-docker-compose</artifactId>
-			<scope>runtime</scope>
-			<optional>true</optional>
-		</dependency>
-		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
 			<version>42.7.7</version> <!-- Используйте актуальную версию -->
@@ -88,8 +82,16 @@
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>3.0.1</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
 			<groupId>org.liquibase</groupId>
 			<artifactId>liquibase-core</artifactId>
+			<version>5.0.1</version>
+			<scope>compile</scope>
 		</dependency>
 	</dependencies>
 
@@ -133,6 +135,18 @@
 							-Amapstruct.defaultInjectionStrategy=constructor
 						</arg>
 					</compilerArgs>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.liquibase</groupId>
+				<artifactId>liquibase-maven-plugin</artifactId>
+				<version>5.0.1</version>
+				<configuration>
+					<driver>org.postgresql.Driver</driver>
+					<url>jdbc:postgresql://localhost:5432/soldo_db</url>
+					<username>app_user</username>
+					<password>app_pass</password>
+					<changeLogFile>src/main/resources/db/db.changelog-master.xml</changeLogFile>
 				</configuration>
 			</plugin>
 		</plugins>

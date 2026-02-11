@@ -1,31 +1,109 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <databaseChangeLog
-        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
-        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="
+       http://www.liquibase.org/xml/ns/dbchangelog
+       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
 
-    <changeSet id="1" author="me">
-        <createTable tableName="users">
-            <column name="id" type="integer">
-                <constraints primaryKey="true"/>
+    <!-- Создание таблицы users -->
+    <changeSet id="1-create-users" author="assistant">
+        <createTable tableName="users" schemaName="public">
+            <column name="id" type="SERIAL">
+                <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="username" type="varchar(50)"/>
-            <column name="password" type="varchar(100)"/>
-            <column name="roles" type="varchar(50)"/>
+            <column name="username" type="VARCHAR(50)"/>
+            <column name="password" type="VARCHAR(100)"/>
+            <column name="roles" type="TEXT[]"/>
         </createTable>
-        <createTable tableName="events">
-            <column name="id" type="int 8" autoIncrement="true">
+    </changeSet>
+
+    <!-- Создание таблицы events -->
+    <changeSet id="2-create-events" author="assistant">
+        <createTable tableName="events" schemaName="public">
+            <column name="id" type="SERIAL">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="title" type="VARCHAR(100)"/>
             <column name="type" type="VARCHAR(100)"/>
             <column name="start_date" type="DATE"/>
             <column name="end_date" type="DATE"/>
-            <column name="price" type="float 8"/>
-            <column name="num_of_participants" type="int 4"/>
+            <column name="price" type="NUMERIC(8,2)"/>
+            <column name="num_of_participants" type="INTEGER"/>
             <column name="description" type="VARCHAR(1000)"/>
         </createTable>
+    </changeSet>
+
+    <!-- Создание таблицы bookings -->
+    <changeSet id="3-create-bookings" author="assistant">
+        <createTable tableName="bookings" schemaName="public">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="event_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="bookings"
+                                 baseColumnNames="user_id"
+                                 constraintName="fk_bookings_users"
+                                 referencedTableName="users" 
+                                 referencedColumnNames="id"/>
+        <addForeignKeyConstraint baseTableName="bookings"
+                                 baseColumnNames="event_id"
+                                 constraintName="fk_bookings_events"
+                                 referencedTableName="events" 
+                                 referencedColumnNames="id"/>
+    </changeSet>
+
+    <!-- Создание таблицы event_bookings_summary -->
+    <changeSet id="4-create-summary" author="assistant">
+        <createTable tableName="event_bookings_summary" schemaName="public">
+            <column name="id" type="BIGSERIAL">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="event_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="total_bookings" type="INT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="confirmed_bookings" type="INT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="available_seats" type="INT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_updated" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="event_bookings_summary"
+                                 baseColumnNames="event_id"
+                                 constraintName="fk_event_bookings_summary_event"
+                                 referencedTableName="events" 
+                                 referencedColumnNames="id"/>
+    </changeSet>
+
+    <!-- Индексы -->
+    <changeSet id="5-create-index-users" author="assistant">
+        <createIndex indexName="idx_bookings_user_id" tableName="bookings" schemaName="public">
+            <column name="user_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="6-create-index-events" author="assistant">
+        <createIndex indexName="idx_bookings_event_id" tableName="bookings" schemaName="public">
+            <column name="event_id"/>
+        </createIndex>
     </changeSet>
 
 </databaseChangeLog>
