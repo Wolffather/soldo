@@ -1,6 +1,8 @@
 package ru.savvy.soldo.controller;
 
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import ru.savvy.soldo.dto.UserDTO;
 import ru.savvy.soldo.mapper.UserMapper;
@@ -22,17 +24,19 @@ public class UserController {
         this.service = service;
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public List<User> getAllUsers() {
         return service.getAllUsers();
     }
 
-    @PostMapping("/create")
-    public User create(@RequestBody UserDTO userDTO) {
-        User user = mapper.dtoToEntity(userDTO);
-        return service.createUser(user);
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/{username}")
+    public User findUser(@PathVariable("username") String username) {
+        return service.findByUsername(username);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/grant-admin-role/{username}")
     public User grantAdminRole(@PathVariable("username") String username) {
         return service.grantAdminRole(username);

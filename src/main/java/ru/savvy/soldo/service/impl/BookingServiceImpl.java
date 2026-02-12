@@ -36,9 +36,11 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public List<Booking> findAllUserBookings(Long userId) {
-        return repository.
-                findAllByUserId(userId).
-                orElseThrow(() -> new NotFoundException(String.format("Не найдены записи для пользователя с userId=%s", userId)));
+        List<Booking> found = repository.findAllByUserId(userId).get();
+        if (found.isEmpty()) {
+           throw  new NotFoundException(String.format("Не найдены записи для пользователя с userId=%s", userId));
+        } else
+            return found;
     }
 
     @Override

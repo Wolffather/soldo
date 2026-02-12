@@ -1,6 +1,8 @@
 package ru.savvy.soldo.controller;
 
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import ru.savvy.soldo.dto.EventDTO;
 import ru.savvy.soldo.mapper.EventMapper;
@@ -27,8 +29,9 @@ public class EventController {
         return service.getAllEvents();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/create")
-    public Event create(@RequestBody EventDTO eventDTO) {
+    public Event create(@Valid @RequestBody EventDTO eventDTO) {
         Event event = mapper.dtoToEntity(eventDTO);
         return service.saveEvent(event);
     }

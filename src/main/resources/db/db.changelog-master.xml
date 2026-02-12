@@ -11,8 +11,9 @@
             <column name="id" type="SERIAL">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="username" type="VARCHAR(50)"/>
-            <column name="password" type="VARCHAR(100)"/>
+            <column name="username" type="VARCHAR(50)">
+                <constraints unique="true" nullable="false"/>
+            </column>
             <column name="roles" type="TEXT[]"/>
         </createTable>
     </changeSet>
