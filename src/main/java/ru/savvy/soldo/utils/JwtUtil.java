@@ -3,40 +3,39 @@ package ru.savvy.soldo.utils;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.JwtException;
-import ru.savvy.soldo.enums.UserRole;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 import java.util.Date;
-import java.util.List;
-import java.util.stream.Collectors;
 
+@Component
 public class JwtUtil {
+
+    private static String staticSecretKey;
+
+    @Value("${jwt.secret}")
+    public void setSecretKey(String secretKey) {
+        JwtUtil.staticSecretKey = secretKey; // присваиваем статическому полю
+    }
     
-    /**
-     * Генерация токена с ролями
-     * @param username логин пользователя
-     * @param UserRoles список ролей (enum или строк)
-     * @return JWT токен
-     */
-    public static String generateToken(String username, List<UserRole> UserRoles) {
+    public static String generateToken(String username, String userRole) {
         Claims claims = Jwts.claims().setSubject(username);
-        List<String> UserRoleNames = UserRoles.stream().map(UserRole::name).collect(Collectors.toList());
-        claims.put("UserRoles", UserRoleNames);
+        claims.put("UserRole", userRole);
+        claims.put("Username", username);
 
         return Jwts.builder()
                 .setClaims(claims)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + 86400000)) // 1 день
+                .signWith(io.jsonwebtoken.security.Keys.hmacShaKeyFor(staticSecretKey.getBytes()))
                 .compact();
     }
 
-    /**
-     * Проверка валидности токена (без секретного ключа)
-     * @param token JWT
-     * @return true, если валиден
-     */
     public static boolean validateToken(String token) {
         try {
+           
             Jwts.parserBuilder()
+                    .setSigningKey(io.jsonwebtoken.security.Keys.hmacShaKeyFor(staticSecretKey.getBytes()))
                     .build()
                     .parseClaimsJws(token);
             return true;
@@ -45,36 +44,24 @@ public class JwtUtil {
         }
     }
 
-    /**
-     * Извлечение имени пользователя из токена
-     * @param token JWT
-     * @return логин
-     */
     public static String getUsernameFromToken(String token) {
+       
         Claims claims = Jwts.parserBuilder()
-                //.setSigningKey(SECRET_KEY)
+                .setSigningKey(io.jsonwebtoken.security.Keys.hmacShaKeyFor(staticSecretKey.getBytes()))
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
         return claims.getSubject();
     }
 
-    /**
-     * Извлечение ролей из токена
-     * @param token JWT
-     * @return список ролей
-     */
-    public static List<UserRole> getUserRolesFromToken(String token) {
+    public static String getUserRoleFromToken(String token) {
+       
         Claims claims = Jwts.parserBuilder()
+                .setSigningKey(io.jsonwebtoken.security.Keys.hmacShaKeyFor(staticSecretKey.getBytes()))
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
 
-        List<String> UserRoleNames = (List<String>) claims.get("UserRoles");
-        return UserRoleNames.stream()
-                .map(UserRole::valueOf)
-                .collect(Collectors.toList());
+        return (String) claims.get("UserRole");
     }
-
-    
 }

@@ -7,9 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import ru.savvy.soldo.enums.UserRole;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 
 @Entity
 @Table(name = "users")
@@ -26,28 +23,10 @@ public class User {
     @Column(name = "username")
     private String username;
 
-    @Column(name = "roles")
-    private List<String> roles;
+    @Column(name = "role")
+    private String role;
 
     public boolean hasRole(UserRole userRole) {
-        return this.getRoles().contains(userRole);
-    }
-
-    public void addRole(UserRole userRole) {
-        this.getRoles().add(userRole);
-    }
-
-    public List<UserRole> getRoles() {
-        return roles.stream()
-                .map(roleStr -> {
-                    try {
-                        return UserRole.valueOf(roleStr);
-                    } catch (IllegalArgumentException e) {
-                        // Можно логировать или игнорировать некорректные значения
-                        return null; // или исключение
-                    }
-                })
-                .filter(role -> role != null) // фильтрация ошибок
-                .collect(Collectors.toList());
+        return this.getRole().equals(userRole.name());
     }
 }

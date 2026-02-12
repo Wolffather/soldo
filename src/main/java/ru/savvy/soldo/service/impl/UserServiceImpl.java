@@ -5,7 +5,6 @@ import org.postgresql.util.PSQLException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 import ru.savvy.soldo.enums.UserRole;
 import ru.savvy.soldo.exception.DataDuplicationException;
 import ru.savvy.soldo.exception.NotFoundException;
@@ -41,7 +40,7 @@ public class UserServiceImpl implements UserService {
        if (user.hasRole(UserRole.ADMIN)) {
            throw new RoleAlreadyExistsException(String.format("Уже выданы права админа пользователю с username=%s", username));
        } else {
-           user.addRole(UserRole.ADMIN);
+           user.setRole(UserRole.ADMIN.name());
            return repository.save(user);
        }
     }

@@ -34,21 +34,17 @@ public class AuthorizationController {
 
         User userSaved = service.createUser(user);
 
-        String token = JwtUtil.generateToken(userSaved.getId().toString(), userSaved.getRoles());
+        String token = JwtUtil.generateToken(userSaved.getId().toString(), userSaved.getRole());
         return Map.of("token", "Bearer " + token);
 
     }
 
     @PostMapping("/login")
     public Map<String, String> login(@RequestBody String username) {
-        try {
-            User user = service.findByUsername(username);
+        User user = service.findByUsername(username);
 
-            String token = JwtUtil.generateToken(user.getId().toString(), user.getRoles());
-            return Map.of("token", token);
-        } catch (NotFoundException e) {
-            throw e;
-        }
+        String token = JwtUtil.generateToken(username, user.getRole());
+        return Map.of("token", token);
     }
 
 
