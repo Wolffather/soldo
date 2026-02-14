@@ -4,6 +4,7 @@ package ru.savvy.soldo.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Data
@@ -31,7 +32,7 @@ public class Event {
     private LocalDate endDate;
 
     @Column(name = "price", precision = 10)
-    private Double price;
+    private BigDecimal price;
 
     @Column(name = "num_of_participants")
     private Integer numOfParticipants;

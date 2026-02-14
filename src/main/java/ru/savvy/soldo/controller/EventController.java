@@ -1,28 +1,23 @@
 package ru.savvy.soldo.controller;
 
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import ru.savvy.soldo.dto.EventDTO;
 import ru.savvy.soldo.mapper.EventMapper;
 import ru.savvy.soldo.model.Event;
-import ru.savvy.soldo.service.impl.EventServiceImpl;
+import ru.savvy.soldo.service.EventService;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/events")
+@AllArgsConstructor
 public class EventController {
-    private final EventServiceImpl service;
-
-    @Autowired
+    private final EventService service;
     private EventMapper mapper;
-
-    @Autowired
-    public EventController(EventServiceImpl service) {
-        this.service = service;
-    }
 
     @GetMapping
     public List<Event> getAll() {

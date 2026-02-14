@@ -1,44 +1,44 @@
 package ru.savvy.soldo.controller;
 
-import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import ru.savvy.soldo.dto.UserDTO;
+import ru.savvy.soldo.dto.UserResponse;
 import ru.savvy.soldo.mapper.UserMapper;
-import ru.savvy.soldo.model.User;
-import ru.savvy.soldo.service.impl.UserServiceImpl;
+import ru.savvy.soldo.service.UserService;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/users")
+@PreAuthorize("hasRole('ADMIN')")
 public class UserController {
 
-    private final UserServiceImpl service;
-    @Autowired
-    private UserMapper mapper;
+    private final UserService service;
+    private final UserMapper mapper;
 
-    @Autowired
-    public UserController(UserServiceImpl service) {
+    public UserController(UserService service, UserMapper mapper) {
         this.service = service;
+        this.mapper = mapper;
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
-    public List<User> getAllUsers() {
-        return service.getAllUsers();
+    public ResponseEntity<List<UserResponse>> getAllUsers() {
+        return ResponseEntity.ok(
+                mapper.entitiesToResponses(service.getAllUsers()));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/{username}")
-    public User findUser(@PathVariable("username") String username) {
-        return service.findByUsername(username);
+    @GetMapping("/{telegramId}")
+    public ResponseEntity<UserResponse> findUser(
+            @PathVariable Long telegramId) {
+        return ResponseEntity.ok(
+                mapper.entityToResponse(service.findByTelegramId(telegramId)));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @PatchMapping("/grant-admin-role/{username}")
-    public User grantAdminRole(@PathVariable("username") String username) {
-        return service.grantAdminRole(username);
+    @PatchMapping("/grant-admin-role/{telegramId}")
+    public ResponseEntity<UserResponse> grantAdminRole(
+            @PathVariable Long telegramId) {
+        return ResponseEntity.ok(
+                mapper.entityToResponse(service.grantAdminRole(telegramId)));
     }
 }

@@ -1,71 +1,127 @@
 package ru.savvy.soldo.exception;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import ru.savvy.soldo.utils.ErrorTextFormatter;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import ru.savvy.soldo.dto.ErrorResponse;
 
-import java.time.LocalDateTime;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
-@ControllerAdvice
+@Slf4j
+@RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(NotFoundException.class)
-    public ResponseEntity<Map<String, Object>> handleNotFoundException(NotFoundException ex) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now());
-        body.put("status", HttpStatus.NOT_FOUND.value());
-        body.put("error", "Not Found");
-        body.put("message", ex.getMessage());
+    // ─── 400 Bad Request ───────────────────────────────────
 
-        return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
+    /**
+     * Ошибки валидации @Valid — возвращаем ошибки по каждому полю
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleValidation(
+            MethodArgumentNotValidException ex) {
+
+        Map<String, String> fieldErrors = new LinkedHashMap<>();
+        ex.getBindingResult().getFieldErrors().forEach(error ->
+                                                               fieldErrors.put(error.getField(), error.getDefaultMessage()));
+
+        ErrorResponse response = ErrorResponse.builder()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error("Ошибка валидации")
+                .message("Проверьте корректность переданных данных")
+                .fieldErrors(fieldErrors)
+                .build();
+
+        return ResponseEntity.badRequest().body(response);
     }
+
+    /**
+     * Недопустимая бизнес-операция
+     * (например, подтверждение уже отменённого бронирования)
+     */
+    @ExceptionHandler(IllegalOperationException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalOperation(
+            IllegalOperationException ex) {
+        return buildResponse(HttpStatus.BAD_REQUEST, "Недопустимая операция", ex);
+    }
+
+    /**
+     * Отсутствует обязательный заголовок (например, X-Bot-Secret)
+     */
+    @ExceptionHandler(MissingRequestHeaderException.class)
+    public ResponseEntity<ErrorResponse> handleMissingHeader(
+            MissingRequestHeaderException ex) {
+        return buildResponse(HttpStatus.BAD_REQUEST, "Отсутствует заголовок", ex);
+    }
+
+    // ─── 403 Forbidden ────────────────────────────────────
+
+    /**
+     * Нет прав доступа (Spring Security AccessDeniedException)
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(
+            AccessDeniedException ex) {
+        return buildResponse(HttpStatus.FORBIDDEN, "Доступ запрещён", ex);
+    }
+
+    // ─── 404 Not Found ────────────────────────────────────
+
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNotFound(
+            NotFoundException ex) {
+        return buildResponse(HttpStatus.NOT_FOUND, "Не найдено", ex);
+    }
+
+    // ─── 409 Conflict ─────────────────────────────────────
 
     @ExceptionHandler(RoleAlreadyExistsException.class)
-    public ResponseEntity<Map<String, Object>> handleRoleExistsException(RoleAlreadyExistsException ex) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now());
-        body.put("status", HttpStatus.CONFLICT.value());
-        body.put("error", "Already exists");
-        body.put("message", ex.getMessage());
-
-        return new ResponseEntity<>(body, HttpStatus.CONFLICT);
-    }
-
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now());
-        body.put("status", HttpStatus.BAD_REQUEST.value());
-        body.put("error", "Bad Request");
-        body.put("message", ErrorTextFormatter.formatError(ex.getMessage()));
-
-        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
-    }
-
-    @ExceptionHandler(IllegalOperationException.class)
-    public ResponseEntity<Map<String, Object>> handleIllegalOperationException(IllegalOperationException ex) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now());
-        body.put("status", HttpStatus.FORBIDDEN.value());
-        body.put("error", "Forbidden");
-        body.put("message", ex.getMessage());
-
-        return new ResponseEntity<>(body, HttpStatus.FORBIDDEN);
+    public ResponseEntity<ErrorResponse> handleRoleExists(
+            RoleAlreadyExistsException ex) {
+        return buildResponse(HttpStatus.CONFLICT, "Конфликт данных", ex);
     }
 
     @ExceptionHandler(DataDuplicationException.class)
-    public ResponseEntity<Map<String, Object>> handleDataDuplicationException(DataDuplicationException ex) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("timestamp", LocalDateTime.now());
-        body.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-        body.put("error", "Something went wrong");
-        body.put("message", ex.getMessage());
+    public ResponseEntity<ErrorResponse> handleDuplicate(
+            DataDuplicationException ex) {
+        return buildResponse(HttpStatus.CONFLICT, "Дубликат данных", ex);
+    }
 
-        return new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR);
+    // ─── 500 Internal Server Error ────────────────────────
+
+    /**
+     * Всё, что не поймали выше — логируем и возвращаем
+     * безопасное сообщение без деталей
+     */
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleUnexpected(Exception ex) {
+        log.error("Непредвиденная ошибка", ex);
+
+        ErrorResponse response = ErrorResponse.builder()
+                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                .error("Внутренняя ошибка сервера")
+                .message("Произошла непредвиденная ошибка. Обратитесь к администратору.")
+                .build();
+
+        return ResponseEntity.internalServerError().body(response);
+    }
+
+    // ─── Утилитарный метод ────────────────────────────────
+
+    private ResponseEntity<ErrorResponse> buildResponse(
+            HttpStatus status, String error, Exception ex) {
+
+        ErrorResponse response = ErrorResponse.builder()
+                .status(status.value())
+                .error(error)
+                .message(ex.getMessage())
+                .build();
+
+        return ResponseEntity.status(status).body(response);
     }
 }

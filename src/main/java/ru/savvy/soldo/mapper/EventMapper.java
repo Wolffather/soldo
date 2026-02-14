@@ -5,7 +5,6 @@ import org.mapstruct.Mapping;
 import ru.savvy.soldo.dto.EventDTO;
 import ru.savvy.soldo.model.Event;
 
-
 @Mapper(componentModel = "spring")
 public interface EventMapper {
 
@@ -14,4 +13,3 @@ public interface EventMapper {
 
     EventDTO entityToDto(Event event);
 }
-

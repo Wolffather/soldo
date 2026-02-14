@@ -1,7 +1,7 @@
 package ru.savvy.soldo.enums;
 
 public enum BookingStatus {
-    PENDING_CONFIRMATION,
+    PENDING,
     CONFIRMED,
     CANCELLED,
     NEED_IFO

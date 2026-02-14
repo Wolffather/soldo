@@ -2,13 +2,37 @@ package ru.savvy.soldo.mapper;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.Named;
 import ru.savvy.soldo.dto.BookingDTO;
+import ru.savvy.soldo.dto.BookingResponse;
+import ru.savvy.soldo.enums.BookingStatus;
 import ru.savvy.soldo.model.Booking;
+import ru.savvy.soldo.model.Event;
 
-@Mapper(componentModel = "spring")
+import java.util.List;
+
+@Mapper(componentModel = "spring", imports = {BookingStatus.class})
 public interface BookingMapper {
+
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "user", ignore = true)
+    @Mapping(target = "event", source = "eventId", qualifiedByName = "eventFromId")
+    @Mapping(target = "status", source = "status", defaultExpression = "java(BookingStatus.PENDING)")
+    @Mapping(target = "createdAt", ignore = true)
     Booking dtoToEntity(BookingDTO dto);
 
-    BookingDTO entityToDto(Booking booking);
+    @Mapping(target = "userId", source = "user.id")
+    @Mapping(target = "eventId", source = "event.id")
+    @Mapping(target = "eventTitle", source = "event.title")
+    BookingResponse entityToResponse(Booking booking);
+
+    List<BookingResponse> entitiesToResponses(List<Booking> bookings);
+
+    @Named("eventFromId")
+    default Event eventFromId(Long eventId) {
+        if (eventId == null) return null;
+        return Event.builder()
+                .id(eventId)
+                .build();
+    }
 }

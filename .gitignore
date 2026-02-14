@@ -36,7 +36,7 @@ build/
 compose.yml
 
 ### Application properties ###
-src/main/resources/application.yaml
+src/main/resources/application-local.yml
 
 ### Liquibase ###
 *.properties

@@ -1,16 +1,18 @@
 package ru.savvy.soldo.dto;
 
-import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
 import ru.savvy.soldo.enums.BookingStatus;
 
+import java.time.LocalDateTime;
+
 @Data
 @Builder
-public class BookingDTO {
-
-    @NotNull(message = "eventId обязателен")
+public class BookingResponse {
+    private Long id;
+    private Long userId;
     private Long eventId;
-
+    private String eventTitle;
     private BookingStatus status;
+    private LocalDateTime createdAt;
 }

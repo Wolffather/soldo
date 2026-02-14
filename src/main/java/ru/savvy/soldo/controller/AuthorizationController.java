@@ -1,51 +1,52 @@
 package ru.savvy.soldo.controller;
 
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import ru.savvy.soldo.dto.UserDTO;
-import ru.savvy.soldo.exception.NotFoundException;
-import ru.savvy.soldo.mapper.UserMapper;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.bind.annotation.*;
+import ru.savvy.soldo.dto.TelegramAuthRequest;
+import ru.savvy.soldo.dto.TokenResponse;
 import ru.savvy.soldo.model.User;
-import ru.savvy.soldo.service.impl.UserServiceImpl;
-import ru.savvy.soldo.utils.JwtUtil;
+import ru.savvy.soldo.security.JwtTokenProvider;
+import ru.savvy.soldo.service.UserService;
 
-import java.util.Map;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 
 @RestController
 @RequestMapping("/auth")
 public class AuthorizationController {
 
-    private final UserServiceImpl service;
-    @Autowired
-    private UserMapper mapper;
+    private final UserService userService;
+    private final JwtTokenProvider jwtTokenProvider;
+    private final String botSecret;
 
-    @Autowired
-    public AuthorizationController(UserServiceImpl service) {
-        this.service = service;
+    public AuthorizationController(UserService userService,
+                                   JwtTokenProvider jwtTokenProvider,
+                                   @Value("${telegram.bot.secret}") String botSecret) {
+        this.userService = userService;
+        this.jwtTokenProvider = jwtTokenProvider;
+        this.botSecret = botSecret;
     }
 
-    @PostMapping("/register")
-    public Map<String, String> register(@Valid @RequestBody UserDTO userDTO) {
-        User user = mapper.dtoToEntity(userDTO);
+    @PostMapping("/telegram")
+    public ResponseEntity<TokenResponse> authenticateViaTelegram(
+            @Valid @RequestBody TelegramAuthRequest request,
+            @RequestHeader("X-Bot-Secret") String secret) {
 
-        User userSaved = service.createUser(user);
+        if (!MessageDigest.isEqual(
+                secret.getBytes(StandardCharsets.UTF_8),
+                botSecret.getBytes(StandardCharsets.UTF_8))) {
+            throw new AccessDeniedException("Неавторизованный клиент");
+        }
 
-        String token = JwtUtil.generateToken(userSaved.getId().toString(), userSaved.getRole());
-        return Map.of("token", "Bearer " + token);
+        User user = userService.findOrCreateByTelegramId(request);
 
+        String token = jwtTokenProvider.generateToken(
+                user.getId().toString(), user.getRole());
+
+        return ResponseEntity.ok(
+                new TokenResponse("Bearer " + token, user.getRole(), user.getId()));
     }
-
-    @PostMapping("/login")
-    public Map<String, String> login(@RequestBody String username) {
-        User user = service.findByUsername(username);
-
-        String token = JwtUtil.generateToken(username, user.getRole());
-        return Map.of("token", token);
-    }
-
-
 }

@@ -9,12 +9,23 @@ public class DateOrderValidator implements ConstraintValidator<ValidDateOrder, E
     @Override
     public boolean isValid(EventDTO event, ConstraintValidatorContext context) {
         if (event == null) {
-            return false;
+            return true;
         }
+
         if (event.getStartDate() == null || event.getEndDate() == null) {
-            return false;
+            return true;
         }
-        return event.getEndDate().isAfter(event.getStartDate());
+
+        boolean isValid = !event.getEndDate().isBefore(event.getStartDate());
+
+        if (!isValid) {
+            context.disableDefaultConstraintViolation();
+            context.buildConstraintViolationWithTemplate(
+                            "Дата окончания должна быть после даты начала")
+                    .addPropertyNode("endDate")
+                    .addConstraintViolation();
+        }
+
+        return isValid;
     }
 }
-

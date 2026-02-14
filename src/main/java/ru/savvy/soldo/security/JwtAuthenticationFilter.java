@@ -1,13 +1,11 @@
 package ru.savvy.soldo.security;
 
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.NonNull;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -15,42 +13,63 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
-
-import static ru.savvy.soldo.utils.JwtUtil.*;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    @Value("${jwt.secret}")
-    private String secretKey;
+    private final JwtTokenProvider jwtTokenProvider;
+
+    public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider) {
+        this.jwtTokenProvider = jwtTokenProvider;
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getServletPath();
+        return path.startsWith("/auth/")
+                || path.startsWith("/swagger-ui")
+                || path.startsWith("/v3/api-docs")
+                || path.startsWith("/swagger-resources")
+                || path.startsWith("/webjars")
+                || path.equals("/favicon.ico");
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
-                                    @NonNull HttpServletResponse response,
-                                    @NonNull FilterChain filterChain)
+                                    HttpServletResponse response,
+                                    FilterChain filterChain)
             throws ServletException, IOException {
 
         String header = request.getHeader("Authorization");
+
         if (header != null && header.startsWith("Bearer ")) {
             String token = header.substring(7);
-            if (validateToken(token)) {
-                String username = getUsernameFromToken(token);
-                String role = getUserRoleFromToken(token);
+            try {
+                if (jwtTokenProvider.validateToken(token)) {
+                    String userId = jwtTokenProvider.getUserIdFromToken(token);
+                    String role = jwtTokenProvider.getRoleFromToken(token);
 
-                String roleWithPrefix = role.startsWith("ROLE_") ? role : "ROLE_" + role;
+                    String roleWithPrefix = role.startsWith("ROLE_")
+                            ? role : "ROLE_" + role;
 
-                List<GrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority(roleWithPrefix));
+                    var authorities = List.of(
+                            new SimpleGrantedAuthority(roleWithPrefix));
 
-                UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                        username,
-                        null,
-                        authorities
-                );
+                    var auth = new UsernamePasswordAuthenticationToken(
+                            userId, null, authorities);
 
-                auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(auth);
+                    auth.setDetails(new WebAuthenticationDetailsSource()
+                                            .buildDetails(request));
+
+                    SecurityContextHolder.getContext().setAuthentication(auth);
+                }
+            } catch (JwtException e) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write(
+                        "{\"error\": \"" + e.getMessage() + "\"}");
+                return;
             }
         }
 

@@ -7,7 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import ru.savvy.soldo.enums.UserRole;
 
-
 @Entity
 @Table(name = "users")
 @Data
@@ -20,13 +19,23 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "telegram_id", unique = true, nullable = false)
+    private Long telegramId;
+
+    @Column(name = "first_name")
+    private String firstName;
+
+    @Column(name = "last_name")
+    private String lastName;
+
     @Column(name = "username")
     private String username;
 
-    @Column(name = "role")
-    private String role;
+    @Column(name = "role", nullable = false)
+    @Builder.Default
+    private String role = UserRole.USER.name();
 
     public boolean hasRole(UserRole userRole) {
-        return this.getRole().equals(userRole.name());
+        return this.role.equals(userRole.name());
     }
 }

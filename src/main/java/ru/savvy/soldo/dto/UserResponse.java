@@ -1,0 +1,15 @@
+package ru.savvy.soldo.dto;
+
+import lombok.Builder;
+import lombok.Data;
+
+@Data
+@Builder
+public class UserResponse {
+    private Long id;
+    private Long telegramId;
+    private String firstName;
+    private String lastName;
+    private String username;
+    private String role;
+}
