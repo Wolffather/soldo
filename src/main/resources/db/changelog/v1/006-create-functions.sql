@@ -73,3 +73,15 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 --rollback DROP FUNCTION IF EXISTS booking_on_cancel_from_pending(BIGINT);
+
+--changeset savvy:006-fn-on-delete splitStatements:false
+CREATE OR REPLACE FUNCTION booking_on_delete(p_event_id BIGINT)
+RETURNS VOID AS $$
+BEGIN
+    UPDATE event_bookings_summary
+    SET total_bookings = total_bookings - 1,
+        last_updated = NOW()
+    WHERE event_id = p_event_id;
+END;
+$$ LANGUAGE plpgsql;
+--rollback DROP FUNCTION IF EXISTS booking_on_delete(BIGINT);

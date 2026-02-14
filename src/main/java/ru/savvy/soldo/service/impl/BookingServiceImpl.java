@@ -10,6 +10,7 @@ import ru.savvy.soldo.repository.BookingRepository;
 import ru.savvy.soldo.repository.EventBookingSummaryRepository;
 import ru.savvy.soldo.service.BookingService;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -49,21 +50,19 @@ public class BookingServiceImpl implements BookingService {
         Long userId = booking.getUser().getId();
         Long eventId = booking.getEvent().getId();
 
-        // 1. Проверяем дубликат бронирования
+        booking.setCreatedAt(LocalDateTime.now());
+
         if (bookingRepository.existsActiveBooking(userId, eventId)) {
             throw new IllegalOperationException(
                     "У пользователя уже есть активное бронирование на это событие");
         }
 
-        // 2. Проверяем наличие мест (если статус сразу CONFIRMED)
         if (booking.getStatus() == BookingStatus.CONFIRMED) {
             validateAvailableSeats(eventId);
         }
 
-        // 3. Сохраняем
         Booking saved = bookingRepository.save(booking);
 
-        // 4. Обновляем summary
         if (saved.getStatus() == BookingStatus.CONFIRMED) {
             summaryRepository.onCreateConfirmed(eventId);
         } else {
@@ -129,7 +128,10 @@ public class BookingServiceImpl implements BookingService {
             throw new IllegalOperationException(
                     "Удаление доступно только для записей в статусе CANCELLED");
         }
+
+        Long eventId = booking.getEvent().getId();
         bookingRepository.delete(booking);
+        summaryRepository.onDelete(eventId);
     }
 
     // ─── Приватные методы ──────────────────────────────────
