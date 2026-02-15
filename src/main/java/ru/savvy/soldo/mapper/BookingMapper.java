@@ -4,8 +4,8 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 import ru.savvy.soldo.dto.BookingDTO;
-import ru.savvy.soldo.dto.BookingResponse;
-import ru.savvy.soldo.enums.BookingStatus;
+import ru.savvy.soldo.dto.response.BookingResponse;
+import ru.savvy.soldo.model.enums.BookingStatus;
 import ru.savvy.soldo.model.Booking;
 import ru.savvy.soldo.model.Event;
 

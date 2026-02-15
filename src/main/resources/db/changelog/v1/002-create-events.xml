@@ -14,14 +14,14 @@
             <column name="title" type="VARCHAR(100)">
                 <constraints nullable="false"/>
             </column>
-            <column name="type" type="VARCHAR(100)">
-                <constraints nullable="false"/>
-            </column>
             <column name="start_date" type="DATE"/>
             <column name="end_date" type="DATE"/>
             <column name="price" type="NUMERIC(10,2)"/>
-            <column name="num_of_participants" type="INTEGER"/>
+            <column name="max_participants" type="INTEGER"/>
             <column name="description" type="VARCHAR(1000)"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
     </changeSet>
 

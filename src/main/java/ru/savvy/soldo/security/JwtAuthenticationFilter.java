@@ -1,10 +1,10 @@
 package ru.savvy.soldo.security;
 
-import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,63 +16,47 @@ import java.io.IOException;
 import java.util.List;
 
 @Component
+@RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
 
-    public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider) {
-        this.jwtTokenProvider = jwtTokenProvider;
-    }
-
     @Override
-    protected boolean shouldNotFilter(HttpServletRequest request) {
-        String path = request.getServletPath();
-        return path.startsWith("/auth/")
-                || path.startsWith("/swagger-ui")
-                || path.startsWith("/v3/api-docs")
-                || path.startsWith("/swagger-resources")
-                || path.startsWith("/webjars")
-                || path.equals("/favicon.ico");
-    }
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain
+    ) throws ServletException, IOException {
 
-    @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain)
-            throws ServletException, IOException {
+        String token = extractToken(request);
 
-        String header = request.getHeader("Authorization");
+        if (token != null && jwtTokenProvider.validateToken(token)) {
+            String userId = jwtTokenProvider.getUserIdFromToken(token);
+            String role = jwtTokenProvider.getRoleFromToken(token);
 
-        if (header != null && header.startsWith("Bearer ")) {
-            String token = header.substring(7);
-            try {
-                if (jwtTokenProvider.validateToken(token)) {
-                    String userId = jwtTokenProvider.getUserIdFromToken(token);
-                    String role = jwtTokenProvider.getRoleFromToken(token);
+            String authority = role.startsWith("ROLE_") ? role : "ROLE_" + role;
 
-                    String roleWithPrefix = role.startsWith("ROLE_")
-                            ? role : "ROLE_" + role;
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(
+                            userId,
+                            null,
+                            List.of(new SimpleGrantedAuthority(authority))
+                    );
 
-                    var authorities = List.of(
-                            new SimpleGrantedAuthority(roleWithPrefix));
+            authentication.setDetails(
+                    new WebAuthenticationDetailsSource().buildDetails(request));
 
-                    var auth = new UsernamePasswordAuthenticationToken(
-                            userId, null, authorities);
-
-                    auth.setDetails(new WebAuthenticationDetailsSource()
-                                            .buildDetails(request));
-
-                    SecurityContextHolder.getContext().setAuthentication(auth);
-                }
-            } catch (JwtException e) {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.setContentType("application/json;charset=UTF-8");
-                response.getWriter().write(
-                        "{\"error\": \"" + e.getMessage() + "\"}");
-                return;
-            }
+            SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private String extractToken(HttpServletRequest request) {
+        String header = request.getHeader("Authorization");
+        if (header != null && header.startsWith("Bearer ")) {
+            return header.substring(7);
+        }
+        return null;
     }
 }

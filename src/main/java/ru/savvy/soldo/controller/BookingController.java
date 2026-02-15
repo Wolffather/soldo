@@ -1,95 +1,68 @@
 package ru.savvy.soldo.controller;
 
 import jakarta.validation.Valid;
-import org.springframework.http.HttpStatus;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import ru.savvy.soldo.dto.BookingDTO;
-import ru.savvy.soldo.dto.BookingResponse;
-import ru.savvy.soldo.mapper.BookingMapper;
-import ru.savvy.soldo.model.Booking;
+import ru.savvy.soldo.dto.*;
+import ru.savvy.soldo.dto.request.PaymentUpdateRequest;
+import ru.savvy.soldo.dto.response.BookingResponse;
+import ru.savvy.soldo.dto.response.BookingSummaryResponse;
 import ru.savvy.soldo.service.BookingService;
-import ru.savvy.soldo.service.UserService;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/bookings")
+@RequiredArgsConstructor
 public class BookingController {
 
     private final BookingService bookingService;
-    private final UserService userService;
-    private final BookingMapper mapper;
-
-    public BookingController(BookingService bookingService,
-                             UserService userService,
-                             BookingMapper mapper) {
-        this.bookingService = bookingService;
-        this.userService = userService;
-        this.mapper = mapper;
-    }
-
-    private Long getCurrentUserId(Authentication auth) {
-        return Long.parseLong((String) auth.getPrincipal());
-    }
-
-    @GetMapping
-    public ResponseEntity<List<BookingResponse>> getMyBookings(Authentication auth) {
-        Long userId = getCurrentUserId(auth);
-        List<Booking> bookings = bookingService.findAllUserBookings(userId);
-        return ResponseEntity.ok(mapper.entitiesToResponses(bookings));
-    }
 
     @PostMapping
-    public ResponseEntity<BookingResponse> createBooking(
-            @Valid @RequestBody BookingDTO bookingDTO,
+    public ResponseEntity<BookingResponse> create(
+            @Valid @RequestBody BookingDTO dto,
             Authentication auth) {
-        Long userId = getCurrentUserId(auth);
-        Booking booking = mapper.dtoToEntity(bookingDTO);
-        booking.setUser(userService.findById(userId));
-        Booking saved = bookingService.createBooking(booking);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(mapper.entityToResponse(saved));
+        Long userId = Long.parseLong(auth.getName());
+        return ResponseEntity.ok(bookingService.create(dto, userId));
     }
 
-    @PatchMapping("/{bookingId}/confirm")
-    public ResponseEntity<BookingResponse> confirmBooking(
-            @PathVariable Long bookingId,
-            Authentication auth) {
-        Booking booking = bookingService.findBookingById(bookingId);
-        checkAccess(auth, booking.getUser().getId());
-        Booking confirmed = bookingService.confirmBooking(booking);
-        return ResponseEntity.ok(mapper.entityToResponse(confirmed));
+    @GetMapping("/event/{eventId}")
+    public ResponseEntity<List<BookingResponse>> getByEvent(@PathVariable Long eventId) {
+        return ResponseEntity.ok(bookingService.getByEventId(eventId));
     }
 
-    @PatchMapping("/{bookingId}/cancel")
-    public ResponseEntity<BookingResponse> cancelBooking(
-            @PathVariable Long bookingId,
-            Authentication auth) {
-        Booking booking = bookingService.findBookingById(bookingId);
-        checkAccess(auth, booking.getUser().getId());
-        Booking cancelled = bookingService.cancelBooking(booking);
-        return ResponseEntity.ok(mapper.entityToResponse(cancelled));
+    @GetMapping("/my")
+    public ResponseEntity<List<BookingResponse>> getMyBookings(Authentication auth) {
+        Long userId = Long.parseLong(auth.getName());
+        return ResponseEntity.ok(bookingService.getByUserId(userId));
     }
 
-    @DeleteMapping("/{bookingId}")
-    public ResponseEntity<Void> deleteBooking(
-            @PathVariable Long bookingId,
-            Authentication auth) {
-        Booking booking = bookingService.findBookingById(bookingId);
-        checkAccess(auth, booking.getUser().getId());
-        bookingService.deleteBooking(booking);
-        return ResponseEntity.noContent().build();
+    @GetMapping("/event/{eventId}/summary")
+    public ResponseEntity<BookingSummaryResponse> getSummary(@PathVariable Long eventId) {
+        return ResponseEntity.ok(bookingService.getSummary(eventId));
     }
 
-    private void checkAccess(Authentication auth, Long resourceUserId) {
-        Long currentUserId = getCurrentUserId(auth);
-        boolean isAdmin = auth.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-        if (!isAdmin && !currentUserId.equals(resourceUserId)) {
-            throw new AccessDeniedException("Доступ запрещён");
-        }
+    @GetMapping("/summary")
+    public ResponseEntity<List<BookingSummaryResponse>> getAllSummaries() {
+        return ResponseEntity.ok(bookingService.getAllSummaries());
+    }
+
+    @PatchMapping("/{id}/confirm")
+    public ResponseEntity<BookingResponse> confirm(@PathVariable Long id) {
+        return ResponseEntity.ok(bookingService.confirm(id));
+    }
+
+    @PatchMapping("/{id}/cancel")
+    public ResponseEntity<BookingResponse> cancel(@PathVariable Long id) {
+        return ResponseEntity.ok(bookingService.cancel(id));
+    }
+
+    @PatchMapping("/{id}/payment")
+    public ResponseEntity<BookingResponse> updatePayment(
+            @PathVariable Long id,
+            @Valid @RequestBody PaymentUpdateRequest request) {
+        return ResponseEntity.ok(bookingService.updatePayment(id, request));
     }
 }

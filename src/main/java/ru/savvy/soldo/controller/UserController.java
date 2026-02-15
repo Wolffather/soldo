@@ -3,7 +3,7 @@ package ru.savvy.soldo.controller;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import ru.savvy.soldo.dto.UserResponse;
+import ru.savvy.soldo.dto.response.UserResponse;
 import ru.savvy.soldo.mapper.UserMapper;
 import ru.savvy.soldo.service.UserService;
 

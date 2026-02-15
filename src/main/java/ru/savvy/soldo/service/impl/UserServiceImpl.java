@@ -2,8 +2,8 @@ package ru.savvy.soldo.service.impl;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.savvy.soldo.dto.TelegramAuthRequest;
-import ru.savvy.soldo.enums.UserRole;
+import ru.savvy.soldo.dto.request.TelegramAuthRequest;
+import ru.savvy.soldo.model.enums.UserRole;
 import ru.savvy.soldo.exception.NotFoundException;
 import ru.savvy.soldo.exception.RoleAlreadyExistsException;
 import ru.savvy.soldo.model.User;
@@ -11,6 +11,7 @@ import ru.savvy.soldo.repository.UserRepository;
 import ru.savvy.soldo.service.UserService;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -19,6 +20,11 @@ public class UserServiceImpl implements UserService {
 
     public UserServiceImpl(UserRepository repository) {
         this.repository = repository;
+    }
+
+    @Override
+    public Optional<User> findByUsername(String username) {
+        return repository.findByUsername(username);
     }
 
     @Override

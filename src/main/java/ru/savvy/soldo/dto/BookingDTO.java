@@ -3,7 +3,7 @@ package ru.savvy.soldo.dto;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
-import ru.savvy.soldo.enums.BookingStatus;
+import ru.savvy.soldo.model.enums.BookingStatus;
 
 @Data
 @Builder

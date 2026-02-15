@@ -1,19 +1,19 @@
 package ru.savvy.soldo.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import ru.savvy.soldo.enums.BookingStatus;
+import lombok.*;
+import ru.savvy.soldo.model.enums.BookingStatus;
+import ru.savvy.soldo.model.enums.PaymentStatus;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-@Data
 @Entity
 @Table(name = "bookings")
-@AllArgsConstructor
+@Data
 @NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class Booking {
 
@@ -25,16 +25,41 @@ public class Booking {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id", nullable = false)
     private Event event;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status")
-    private BookingStatus status;
+    @Column(nullable = false)
+    @Builder.Default
+    private BookingStatus status = BookingStatus.PENDING;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_status")
+    @Builder.Default
+    private PaymentStatus paymentStatus = PaymentStatus.NOT_REQUIRED;
+
+    @Column(name = "amount_due", precision = 10, scale = 2)
+    @Builder.Default
+    private BigDecimal amountDue = BigDecimal.ZERO;
+
+    @Column(name = "amount_paid", precision = 10, scale = 2)
+    @Builder.Default
+    private BigDecimal amountPaid = BigDecimal.ZERO;
+
+    @Column(name = "payment_deadline")
+    private LocalDate paymentDeadline;
+
+    @Column(name = "payment_date")
+    private LocalDateTime paymentDate;
+
+    private String notes;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+    }
 }

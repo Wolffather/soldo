@@ -2,7 +2,7 @@ package ru.savvy.soldo.mapper;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import ru.savvy.soldo.dto.EventBookingSummaryResponse;
+import ru.savvy.soldo.dto.response.EventBookingSummaryResponse;
 import ru.savvy.soldo.model.EventBookingsSummary;
 
 import java.util.List;

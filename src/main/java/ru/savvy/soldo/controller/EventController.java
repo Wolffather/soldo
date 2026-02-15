@@ -1,33 +1,55 @@
 package ru.savvy.soldo.controller;
 
 import jakarta.validation.Valid;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import ru.savvy.soldo.dto.EventDTO;
-import ru.savvy.soldo.mapper.EventMapper;
-import ru.savvy.soldo.model.Event;
 import ru.savvy.soldo.service.EventService;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/events")
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class EventController {
+
     private final EventService service;
-    private EventMapper mapper;
 
     @GetMapping
-    public List<Event> getAll() {
-        return service.getAllEvents();
+    public ResponseEntity<Page<EventDTO>> getAll(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("startDate").ascending());
+        return ResponseEntity.ok(service.getAll(pageable));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<EventDTO> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(service.getById(id));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping("/create")
-    public Event create(@Valid @RequestBody EventDTO eventDTO) {
-        Event event = mapper.dtoToEntity(eventDTO);
-        return service.saveEvent(event);
+    @PostMapping
+    public ResponseEntity<EventDTO> create(@Valid @RequestBody EventDTO dto) {
+        return ResponseEntity.ok(service.create(dto));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{id}")
+    public ResponseEntity<EventDTO> update(
+            @PathVariable Long id,
+            @Valid @RequestBody EventDTO dto) {
+        return ResponseEntity.ok(service.update(id, dto));
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        service.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }

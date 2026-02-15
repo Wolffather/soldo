@@ -1,17 +1,17 @@
 package ru.savvy.soldo.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import ru.savvy.soldo.enums.UserRole;
+import lombok.*;
+import ru.savvy.soldo.model.enums.UserRole;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "users")
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class User {
 
@@ -19,7 +19,7 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "telegram_id", unique = true, nullable = false)
+    @Column(name = "telegram_id", unique = true)
     private Long telegramId;
 
     @Column(name = "first_name")
@@ -28,12 +28,27 @@ public class User {
     @Column(name = "last_name")
     private String lastName;
 
-    @Column(name = "username")
     private String username;
 
-    @Column(name = "role", nullable = false)
-    @Builder.Default
-    private String role = UserRole.USER.name();
+    @Column(name = "password_hash")
+    private String passwordHash;
+
+    private String role;
+
+    @Column(name = "birth_date")
+    private LocalDate birthDate;
+
+    private String phone;
+
+    private String email;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+    }
 
     public boolean hasRole(UserRole userRole) {
         return this.role.equals(userRole.name());

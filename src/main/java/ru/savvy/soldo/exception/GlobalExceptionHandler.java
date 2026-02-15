@@ -8,7 +8,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import ru.savvy.soldo.dto.ErrorResponse;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import ru.savvy.soldo.dto.response.ErrorResponse;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

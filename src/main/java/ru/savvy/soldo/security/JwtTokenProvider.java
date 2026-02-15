@@ -1,7 +1,9 @@
 package ru.savvy.soldo.security;
 
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -12,14 +14,17 @@ import java.util.Date;
 @Component
 public class JwtTokenProvider {
 
-    private final SecretKey key;
-    private final long expirationMs;
+    @Value("${jwt.secret}")
+    private String secret;
 
-    public JwtTokenProvider(
-            @Value("${jwt.secret}") String secret,
-            @Value("${jwt.expiration-ms:86400000}") long expirationMs) { // 24ч по умолчанию
+    @Value("${jwt.expiration-ms}")
+    private long expirationMs;
+
+    private SecretKey key;
+
+    @PostConstruct
+    public void init() {
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
-        this.expirationMs = expirationMs;
     }
 
     public String generateToken(String userId, String role) {
@@ -27,31 +32,36 @@ public class JwtTokenProvider {
         Date expiry = new Date(now.getTime() + expirationMs);
 
         return Jwts.builder()
-                .setSubject(userId)
+                .subject(userId)
                 .claim("role", role)
-                .setIssuedAt(now)
-                .setExpiration(expiry)
+                .issuedAt(now)
+                .expiration(expiry)
                 .signWith(key)
                 .compact();
     }
 
     public boolean validateToken(String token) {
-        parseToken(token); // выбросит исключение если невалидный
-        return true;
+        try {
+            parseToken(token);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public String getUserIdFromToken(String token) {
-        return parseToken(token).getBody().getSubject();
+        return parseToken(token).getSubject();
     }
 
     public String getRoleFromToken(String token) {
-        return parseToken(token).getBody().get("role", String.class);
+        return parseToken(token).get("role", String.class);
     }
 
-    private Jws<Claims> parseToken(String token) {
+    private Claims parseToken(String token) {
         return Jwts.parser()
                 .verifyWith(key)
                 .build()
-                .parseSignedClaims(token);
+                .parseSignedClaims(token)
+                .getPayload();
     }
 }

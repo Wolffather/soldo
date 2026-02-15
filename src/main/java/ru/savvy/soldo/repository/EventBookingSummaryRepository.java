@@ -6,11 +6,14 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import ru.savvy.soldo.model.EventBookingsSummary;
 
+import java.util.Optional;
+
 @Repository
 public interface EventBookingSummaryRepository
         extends JpaRepository<EventBookingsSummary, Long> {
 
-    
+    Optional<EventBookingsSummary> findByEventId(Long eventId);
+
     @Query(value = "SELECT booking_on_create_pending(:eventId)",
             nativeQuery = true)
     void onCreatePending(@Param("eventId") Long eventId);

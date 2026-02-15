@@ -21,5 +21,8 @@
     <include file="db/changelog/v1/004-create-summary.xml"/>
     <include file="db/changelog/v1/005-create-indexes.xml"/>
     <include file="db/changelog/v1/006-create-functions.sql"/>
+    <include file="db/changelog/v2/add-admin-fields.xml"/>
+    <include file="db/changelog/v2/add-pending-cancelled-to-summary.xml"/>
+    <include file="db/changelog/v2/007-phase1-core.xml"/>
 
 </databaseChangeLog>

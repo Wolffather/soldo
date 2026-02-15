@@ -16,11 +16,10 @@ import java.time.LocalDate;
 @ValidDateOrder
 public class EventDTO {
 
+    private Long id;
+
     @NotBlank(message = "Название обязательно")
     private String title;
-
-    @NotBlank(message = "Тип обязателен")
-    private String type;
 
     @NotNull(message = "Дата начала обязательна")
     @FutureOrPresent(message = "Дата окончания не может быть в прошлом")
@@ -33,8 +32,18 @@ public class EventDTO {
     @Positive(message = "Цена должна быть положительной")
     private BigDecimal price;
 
+    @NotNull(message = "Количество участников обязательно")
     @Positive(message = "Количество участников должно быть положительным")
-    private Integer numOfParticipants;
+    private Integer maxParticipants;
+
+    private Long categoryId;
+    private String categoryName;
 
     private String description;
+    private Integer minAge;
+    private Integer maxAge;
+    private String ageGroup;
+
+    private String status;
+    private String createdAt;
 }

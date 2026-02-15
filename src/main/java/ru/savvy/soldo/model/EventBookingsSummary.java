@@ -31,11 +31,22 @@ public class EventBookingsSummary {
     @Column(name = "confirmed_bookings", nullable = false)
     private Integer confirmedBookings;
 
-    @Column(name = "available_seats", nullable = false)
-    private Integer availableSeats ;
+    @Column(name = "num_of_participants", nullable = false)
+    private Integer numOfParticipants ;
+
+    @Column(name = "pending_bookings")
+    private Long pendingBookings;
+
+    @Column(name = "cancelled_bookings")
+    private Long cancelledBookings;
 
     @Column(name = "last_updated", nullable = false)
     private LocalDateTime lastUpdated;
+
+    @PrePersist
+    protected void onCreate() {
+        this.lastUpdated = LocalDateTime.now();
+    }
 
     public static EventBookingsSummary of(Event event) {
         return EventBookingsSummary
@@ -43,7 +54,7 @@ public class EventBookingsSummary {
                 .event(event)
                 .totalBookings(0)
                 .confirmedBookings(0)
-                .availableSeats(event.getNumOfParticipants())
+                .numOfParticipants(event.getMaxParticipants())
                 .lastUpdated(LocalDateTime.now())
                 .build();
     }

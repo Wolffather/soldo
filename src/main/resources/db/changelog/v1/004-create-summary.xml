@@ -21,7 +21,7 @@
             <column name="confirmed_bookings" type="INTEGER" defaultValueNumeric="0">
                 <constraints nullable="false"/>
             </column>
-            <column name="available_seats" type="INTEGER" defaultValueNumeric="0">
+            <column name="num_of_participants" type="INTEGER" defaultValueNumeric="0">
                 <constraints nullable="false"/>
             </column>
             <column name="last_updated" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
