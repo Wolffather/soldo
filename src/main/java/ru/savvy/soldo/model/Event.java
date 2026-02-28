@@ -2,7 +2,6 @@ package ru.savvy.soldo.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import ru.savvy.soldo.model.enums.AgeGroup;
 import ru.savvy.soldo.model.enums.EventStatus;
 
 import java.math.BigDecimal;
@@ -39,15 +38,8 @@ public class Event {
     @Column(name = "max_participants", nullable = false)
     private Integer maxParticipants;
 
-    @Column(name = "min_age")
-    private Integer minAge;
-
-    @Column(name = "max_age")
-    private Integer maxAge;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "age_group")
-    private AgeGroup ageGroup;
+    @Column(name = "game_master")
+    private String gameMaster;
 
     @Column(precision = 10, scale = 2)
     @Builder.Default

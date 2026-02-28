@@ -24,5 +24,11 @@
     <include file="db/changelog/v2/add-admin-fields.xml"/>
     <include file="db/changelog/v2/add-pending-cancelled-to-summary.xml"/>
     <include file="db/changelog/v2/007-phase1-core.xml"/>
+    <include file="db/changelog/v2/008-cascade-notifications.xml"/>
+    <include file="db/changelog/v3/009-remove-age-add-game-master.xml"/>
+    <include file="db/changelog/v3/010-user-auth-providers.xml"/>
+    <include file="db/changelog/v3/011-document-templates.xml"/>
+    <include file="db/changelog/v3/012-rename-rpg-to-trip.xml"/>
+    <include file="db/changelog/v3/013-remove-rpg-category.xml"/>
 
 </databaseChangeLog>

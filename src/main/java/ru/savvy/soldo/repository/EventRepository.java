@@ -30,8 +30,4 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     @Query("SELECT e FROM Event e WHERE e.status = 'PUBLISHED' AND e.startDate BETWEEN :start AND :end")
     List<Event> findByDateRange(LocalDate start, LocalDate end);
 
-    @Query("SELECT e FROM Event e WHERE e.status = 'PUBLISHED' " +
-            "AND (e.minAge IS NULL OR e.minAge <= :age) " +
-            "AND (e.maxAge IS NULL OR e.maxAge >= :age)")
-    List<Event> findSuitableForAge(int age);
 }

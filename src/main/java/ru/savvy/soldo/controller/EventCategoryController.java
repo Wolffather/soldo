@@ -9,7 +9,9 @@ import ru.savvy.soldo.model.enums.EventFormat;
 import ru.savvy.soldo.model.enums.SeasonType;
 import ru.savvy.soldo.service.EventCategoryService;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/categories")
@@ -21,6 +23,14 @@ public class EventCategoryController {
     @GetMapping
     public ResponseEntity<List<EventCategoryDTO>> getAll() {
         return ResponseEntity.ok(categoryService.getAll());
+    }
+
+    @GetMapping("/formats")
+    public ResponseEntity<List<Map<String, String>>> getFormats() {
+        List<Map<String, String>> formats = Arrays.stream(EventFormat.values())
+                .map(f -> Map.of("value", f.name(), "label", f.getLabel()))
+                .toList();
+        return ResponseEntity.ok(formats);
     }
 
     @GetMapping("/{id}")

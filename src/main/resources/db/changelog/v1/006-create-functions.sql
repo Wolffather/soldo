@@ -19,11 +19,11 @@ BEGIN
     UPDATE event_bookings_summary
     SET total_bookings = total_bookings + 1,
         confirmed_bookings = confirmed_bookings + 1,
-        available_seats = available_seats - 1,
+        num_of_participants = num_of_participants - 1,
         last_updated = NOW()
     WHERE event_id = p_event_id;
 
-    IF (SELECT available_seats FROM event_bookings_summary
+    IF (SELECT num_of_participants FROM event_bookings_summary
         WHERE event_id = p_event_id) < 0 THEN
         RAISE EXCEPTION 'Нет свободных мест для события %', p_event_id;
     END IF;
@@ -37,11 +37,11 @@ RETURNS VOID AS $$
 BEGIN
     UPDATE event_bookings_summary
     SET confirmed_bookings = confirmed_bookings + 1,
-        available_seats = available_seats - 1,
+        num_of_participants = num_of_participants - 1,
         last_updated = NOW()
     WHERE event_id = p_event_id;
 
-    IF (SELECT available_seats FROM event_bookings_summary
+    IF (SELECT num_of_participants FROM event_bookings_summary
         WHERE event_id = p_event_id) < 0 THEN
         RAISE EXCEPTION 'Нет свободных мест для события %', p_event_id;
     END IF;
@@ -55,7 +55,7 @@ RETURNS VOID AS $$
 BEGIN
     UPDATE event_bookings_summary
     SET confirmed_bookings = confirmed_bookings - 1,
-        available_seats = available_seats + 1,
+        num_of_participants = num_of_participants + 1,
         last_updated = NOW()
     WHERE event_id = p_event_id;
 END;

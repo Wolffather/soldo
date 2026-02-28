@@ -10,13 +10,18 @@ import ru.savvy.soldo.dto.response.BookingSummaryResponse;
 import ru.savvy.soldo.exception.IllegalOperationException;
 import ru.savvy.soldo.exception.NotFoundException;
 import ru.savvy.soldo.model.Booking;
+import ru.savvy.soldo.model.BookingDocument;
+import ru.savvy.soldo.model.DocumentTemplate;
 import ru.savvy.soldo.model.Event;
 import ru.savvy.soldo.model.EventBookingsSummary;
 import ru.savvy.soldo.model.User;
 import ru.savvy.soldo.model.enums.BookingStatus;
+import ru.savvy.soldo.model.enums.EventFormat;
 import ru.savvy.soldo.model.enums.NotificationType;
 import ru.savvy.soldo.model.enums.PaymentStatus;
+import ru.savvy.soldo.repository.BookingDocumentRepository;
 import ru.savvy.soldo.repository.BookingRepository;
+import ru.savvy.soldo.repository.DocumentTemplateRepository;
 import ru.savvy.soldo.repository.EventBookingSummaryRepository;
 import ru.savvy.soldo.repository.EventRepository;
 import ru.savvy.soldo.repository.UserRepository;
@@ -27,16 +32,21 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 public class BookingServiceImpl implements BookingService {
+
+    private static final Set<EventFormat> CAMP_FORMATS = Set.of(EventFormat.CAMP_CITY, EventFormat.CAMP_OUTDOOR);
 
     private final BookingRepository bookingRepository;
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
     private final EventBookingSummaryRepository summaryRepository;
     private final NotificationService notificationService;
+    private final DocumentTemplateRepository documentTemplateRepository;
+    private final BookingDocumentRepository bookingDocumentRepository;
 
     @Override
     @Transactional
@@ -47,22 +57,10 @@ public class BookingServiceImpl implements BookingService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("Пользователь не найден"));
 
-        // Проверка дублирования
         if (bookingRepository.existsByUserIdAndEventIdAndStatusNot(userId, event.getId(), BookingStatus.CANCELLED)) {
             throw new IllegalOperationException("Бронирование уже существует");
         }
 
-        // Проверка возраста
-        if (user.getBirthDate() != null && event.getMinAge() != null) {
-            int age = LocalDate.now().getYear() - user.getBirthDate().getYear();
-            if (age < event.getMinAge() || (event.getMaxAge() != null && age > event.getMaxAge())) {
-                throw new IllegalOperationException(
-                        String.format("Возраст не подходит. Требуется: %d-%d лет",
-                                      event.getMinAge(), event.getMaxAge()));
-            }
-        }
-
-        // Определяем статус оплаты
         PaymentStatus paymentStatus = PaymentStatus.NOT_REQUIRED;
         BigDecimal amountDue = BigDecimal.ZERO;
         LocalDate paymentDeadline = null;
@@ -73,10 +71,12 @@ public class BookingServiceImpl implements BookingService {
             paymentDeadline = LocalDate.now().plusDays(7);
         }
 
+        BookingStatus status = dto.getStatus();
+
         Booking booking = Booking.builder()
                 .user(user)
                 .event(event)
-                .status(BookingStatus.PENDING)
+                .status(status)
                 .paymentStatus(paymentStatus)
                 .amountDue(amountDue)
                 .paymentDeadline(paymentDeadline)
@@ -84,7 +84,15 @@ public class BookingServiceImpl implements BookingService {
 
         booking = bookingRepository.save(booking);
 
-        // Уведомление
+        if (event.getCategory() != null && CAMP_FORMATS.contains(event.getCategory().getFormat())) {
+            createDocumentsForCampBooking(booking, event.getCategory().getFormat().name());
+        }
+
+        switch (status) {
+            case BookingStatus.PENDING -> summaryRepository.onCreatePending(booking.getId());
+            case BookingStatus.CONFIRMED -> summaryRepository.onCreateConfirmed(booking.getId());
+        }
+
         notificationService.createAndSend(
                 userId, event.getId(), booking.getId(),
                 NotificationType.BOOKING_CONFIRMED,
@@ -133,8 +141,8 @@ public class BookingServiceImpl implements BookingService {
 
         booking.setStatus(BookingStatus.CONFIRMED);
         booking = bookingRepository.save(booking);
+        summaryRepository.onConfirm(booking.getId());
 
-        // Уведомление
         notificationService.createAndSend(
                 booking.getUser().getId(),
                 booking.getEvent().getId(),
@@ -158,7 +166,6 @@ public class BookingServiceImpl implements BookingService {
         booking.setStatus(BookingStatus.CANCELLED);
         booking = bookingRepository.save(booking);
 
-        // Уведомление
         notificationService.createAndSend(
                 booking.getUser().getId(),
                 booking.getEvent().getId(),
@@ -196,6 +203,19 @@ public class BookingServiceImpl implements BookingService {
         }
 
         return toResponse(bookingRepository.save(booking));
+    }
+
+    private void createDocumentsForCampBooking(Booking booking, String categoryFormat) {
+        List<DocumentTemplate> templates = documentTemplateRepository.findByCategoryFormat(categoryFormat);
+        List<BookingDocument> docs = templates.stream()
+                .map(template -> {
+                    BookingDocument doc = new BookingDocument();
+                    doc.setBooking(booking);
+                    doc.setDocumentTemplate(template);
+                    return doc;
+                })
+                .toList();
+        bookingDocumentRepository.saveAll(docs);
     }
 
     private Booking findOrThrow(Long id) {

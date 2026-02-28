@@ -9,7 +9,6 @@ import ru.savvy.soldo.mapper.EventMapper;
 import ru.savvy.soldo.model.Event;
 import ru.savvy.soldo.model.EventBookingsSummary;
 import ru.savvy.soldo.model.EventCategory;
-import ru.savvy.soldo.model.enums.AgeGroup;
 import ru.savvy.soldo.model.enums.EventStatus;
 import ru.savvy.soldo.repository.EventBookingSummaryRepository;
 import ru.savvy.soldo.repository.EventCategoryRepository;
@@ -19,7 +18,6 @@ import ru.savvy.soldo.service.EventService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -46,10 +44,6 @@ public class EventServiceImpl implements EventService {
             event.setStatus(EventStatus.valueOf(dto.getStatus()));
         } else {
             event.setStatus(EventStatus.PUBLISHED);
-        }
-
-        if (dto.getAgeGroup() != null && !dto.getAgeGroup().isBlank()) {
-            event.setAgeGroup(AgeGroup.valueOf(dto.getAgeGroup()));
         }
 
         event = eventRepository.save(event);
@@ -90,10 +84,6 @@ public class EventServiceImpl implements EventService {
 
         if (dto.getStatus() != null && !dto.getStatus().isBlank()) {
             event.setStatus(EventStatus.valueOf(dto.getStatus()));
-        }
-
-        if (dto.getAgeGroup() != null && !dto.getAgeGroup().isBlank()) {
-            event.setAgeGroup(AgeGroup.valueOf(dto.getAgeGroup()));
         }
 
         event = eventRepository.save(event);

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <!-- Переименовываем формат RPG → TRIP в существующих категориях -->
+    <changeSet id="012-01-rename-rpg-to-trip" author="savvy">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM event_categories WHERE format = 'TRIP'
+            </sqlCheck>
+        </preConditions>
+        <sql>
+            UPDATE event_categories SET format = 'TRIP' WHERE format = 'RPG';
+        </sql>
+        <rollback>
+            UPDATE event_categories SET format = 'RPG' WHERE format = 'TRIP';
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,12 +1,16 @@
 package ru.savvy.soldo.service.impl;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.savvy.soldo.dto.request.TelegramAuthRequest;
+import ru.savvy.soldo.model.UserAuthProvider;
+import ru.savvy.soldo.model.enums.AuthProviderType;
 import ru.savvy.soldo.model.enums.UserRole;
 import ru.savvy.soldo.exception.NotFoundException;
 import ru.savvy.soldo.exception.RoleAlreadyExistsException;
 import ru.savvy.soldo.model.User;
+import ru.savvy.soldo.repository.UserAuthProviderRepository;
 import ru.savvy.soldo.repository.UserRepository;
 import ru.savvy.soldo.service.UserService;
 
@@ -14,13 +18,11 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
     private final UserRepository repository;
-
-    public UserServiceImpl(UserRepository repository) {
-        this.repository = repository;
-    }
+    private final UserAuthProviderRepository authProviderRepository;
 
     @Override
     public Optional<User> findByUsername(String username) {
@@ -30,12 +32,17 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public User findOrCreateByTelegramId(TelegramAuthRequest request) {
-        return repository.findByTelegramId(request.getTelegramId())
-                .map(existing -> {
+        String providerUserId = request.getTelegramId().toString();
+
+        return authProviderRepository
+                .findByProviderAndProviderUserId(AuthProviderType.TELEGRAM, providerUserId)
+                .map(authProvider -> {
                     // Обновляем профиль — пользователь мог сменить имя в TG
+                    User existing = authProvider.getUser();
                     existing.setFirstName(request.getFirstName());
                     existing.setLastName(request.getLastName());
                     existing.setUsername(request.getUsername());
+                    existing.setTelegramId(request.getTelegramId());
                     return repository.save(existing);
                 })
                 .orElseGet(() -> {
@@ -46,13 +53,24 @@ public class UserServiceImpl implements UserService {
                             .username(request.getUsername())
                             .role(UserRole.USER.name())
                             .build();
-                    return repository.save(newUser);
+                    newUser = repository.save(newUser);
+
+                    UserAuthProvider authProvider = UserAuthProvider.builder()
+                            .user(newUser)
+                            .provider(AuthProviderType.TELEGRAM)
+                            .providerUserId(providerUserId)
+                            .build();
+                    authProviderRepository.save(authProvider);
+
+                    return newUser;
                 });
     }
 
     @Override
     public User findByTelegramId(Long telegramId) {
-        return repository.findByTelegramId(telegramId)
+        return authProviderRepository
+                .findByProviderAndProviderUserId(AuthProviderType.TELEGRAM, telegramId.toString())
+                .map(UserAuthProvider::getUser)
                 .orElseThrow(() -> new NotFoundException(
                         "Пользователь с telegramId=" + telegramId + " не найден"));
     }

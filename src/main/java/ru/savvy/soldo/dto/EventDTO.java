@@ -25,7 +25,6 @@ public class EventDTO {
     @FutureOrPresent(message = "Дата окончания не может быть в прошлом")
     private LocalDate startDate;
 
-    @NotNull(message = "Дата окончания обязательна")
     @FutureOrPresent(message = "Дата окончания не может быть в прошлом")
     private LocalDate endDate;
 
@@ -40,9 +39,7 @@ public class EventDTO {
     private String categoryName;
 
     private String description;
-    private Integer minAge;
-    private Integer maxAge;
-    private String ageGroup;
+    private String gameMaster;
 
     private String status;
     private String createdAt;
