@@ -3,7 +3,7 @@ package ru.savvy.soldo.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.savvy.soldo.dto.DocumentTemplateDTO;
-import ru.savvy.soldo.exception.NotFoundException;
+import ru.savvy.soldo.exception.EntityFinder;
 import ru.savvy.soldo.model.DocumentTemplate;
 import ru.savvy.soldo.repository.DocumentTemplateRepository;
 import ru.savvy.soldo.service.DocumentTemplateService;
@@ -26,7 +26,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService {
 
     @Override
     public DocumentTemplateDTO getById(Long id) {
-        return toDTO(findOrThrow(id));
+        return toDTO(EntityFinder.findOrThrow(repository.findById(id), "Шаблон документа не найден: " + id));
     }
 
     @Override
@@ -43,7 +43,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService {
 
     @Override
     public DocumentTemplateDTO update(Long id, DocumentTemplateDTO dto) {
-        DocumentTemplate template = findOrThrow(id);
+        DocumentTemplate template = EntityFinder.findOrThrow(repository.findById(id), "Шаблон документа не найден: " + id);
         template.setName(dto.getName());
         template.setDescription(dto.getDescription());
         template.setFileUrl(dto.getFileUrl());
@@ -56,13 +56,8 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService {
 
     @Override
     public void delete(Long id) {
-        findOrThrow(id);
+        EntityFinder.findOrThrow(repository.findById(id), "Шаблон документа не найден: " + id);
         repository.deleteById(id);
-    }
-
-    private DocumentTemplate findOrThrow(Long id) {
-        return repository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Шаблон документа не найден: " + id));
     }
 
     private DocumentTemplateDTO toDTO(DocumentTemplate t) {

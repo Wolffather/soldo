@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.*;
 import ru.savvy.soldo.dto.EventDTO;
 import ru.savvy.soldo.service.EventService;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/events")
 @RequiredArgsConstructor
@@ -25,6 +27,12 @@ public class EventController {
             @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("startDate").ascending());
         return ResponseEntity.ok(service.getAll(pageable));
+    }
+
+    @GetMapping("/upcoming")
+    public ResponseEntity<List<EventDTO>> getUpcoming(
+            @RequestParam(defaultValue = "ALL_YEAR") String season) {
+        return ResponseEntity.ok(service.getUpcoming(season));
     }
 
     @GetMapping("/{id}")

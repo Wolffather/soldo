@@ -9,16 +9,20 @@ import ru.savvy.soldo.model.Booking;
 import ru.savvy.soldo.model.Event;
 import ru.savvy.soldo.model.Notification;
 import ru.savvy.soldo.model.User;
+import ru.savvy.soldo.model.UserAuthProvider;
+import ru.savvy.soldo.model.enums.AuthProviderType;
 import ru.savvy.soldo.model.enums.NotificationType;
 import ru.savvy.soldo.repository.BookingRepository;
 import ru.savvy.soldo.repository.EventRepository;
 import ru.savvy.soldo.repository.NotificationRepository;
+import ru.savvy.soldo.repository.UserAuthProviderRepository;
 import ru.savvy.soldo.repository.UserRepository;
 import ru.savvy.soldo.service.NotificationService;
 import ru.savvy.soldo.service.TelegramSenderService;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -29,7 +33,22 @@ public class NotificationServiceImpl implements NotificationService {
     private final UserRepository userRepository;
     private final EventRepository eventRepository;
     private final BookingRepository bookingRepository;
+    private final UserAuthProviderRepository authProviderRepository;
     private final TelegramSenderService telegramSender;
+
+    /** Returns the Telegram chat ID for a user (via user_auth_providers), or null if none. */
+    private Long getTelegramChatId(User user) {
+        if (user == null) return null;
+        return authProviderRepository.findByUserId(user.getId()).stream()
+                .filter(p -> p.getProvider() == AuthProviderType.TELEGRAM)
+                .map(UserAuthProvider::getProviderUserId)
+                .map(id -> {
+                    try { return Long.parseLong(id); } catch (NumberFormatException e) { return null; }
+                })
+                .filter(java.util.Objects::nonNull)
+                .findFirst()
+                .orElse(null);
+    }
 
     @Override
     @Transactional
@@ -49,10 +68,11 @@ public class NotificationServiceImpl implements NotificationService {
 
         notificationRepository.save(notification);
 
-        // Отправляем в Telegram
-        if (user != null && user.getTelegramId() != null) {
+        // Отправляем в Telegram (если у пользователя привязан Telegram через провайдер)
+        Long telegramId = getTelegramChatId(user);
+        if (telegramId != null) {
             try {
-                telegramSender.sendMessage(user.getTelegramId(), message);
+                telegramSender.sendMessage(telegramId, message);
                 notification.setSent(true);
                 notification.setSentAt(LocalDateTime.now());
                 notificationRepository.save(notification);
@@ -90,9 +110,10 @@ public class NotificationServiceImpl implements NotificationService {
 
         for (Notification notification : pending) {
             User user = notification.getUser();
-            if (user != null && user.getTelegramId() != null) {
+            Long telegramId = getTelegramChatId(user);
+            if (telegramId != null) {
                 try {
-                    telegramSender.sendMessage(user.getTelegramId(), notification.getMessage());
+                    telegramSender.sendMessage(telegramId, notification.getMessage());
                     notification.setSent(true);
                     notification.setSentAt(LocalDateTime.now());
                     notificationRepository.save(notification);

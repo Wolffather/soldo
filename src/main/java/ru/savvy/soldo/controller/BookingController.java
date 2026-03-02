@@ -11,6 +11,7 @@ import ru.savvy.soldo.dto.response.BookingResponse;
 import ru.savvy.soldo.dto.response.BookingSummaryResponse;
 import ru.savvy.soldo.service.BookingService;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -47,6 +48,11 @@ public class BookingController {
     @GetMapping("/summary")
     public ResponseEntity<List<BookingSummaryResponse>> getAllSummaries() {
         return ResponseEntity.ok(bookingService.getAllSummaries());
+    }
+
+    @GetMapping("/stats/monthly-revenue")
+    public ResponseEntity<BigDecimal> getMonthlyRevenue() {
+        return ResponseEntity.ok(bookingService.getMonthlyRevenue());
     }
 
     @PatchMapping("/{id}/confirm")

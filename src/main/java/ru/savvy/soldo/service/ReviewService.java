@@ -1,0 +1,18 @@
+package ru.savvy.soldo.service;
+
+import ru.savvy.soldo.dto.ReviewDTO;
+
+import java.util.List;
+
+public interface ReviewService {
+
+    List<ReviewDTO> getApproved();
+
+    void submit(ReviewDTO dto);
+
+    List<ReviewDTO> getAll();
+
+    ReviewDTO approve(Long id);
+
+    void delete(Long id);
+}

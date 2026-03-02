@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <!-- Add base_name, base_website, year, parent_id columns to events -->
+    <changeSet id="018-1" author="savvy">
+        <addColumn tableName="events">
+            <column name="base_name" type="VARCHAR(255)"/>
+            <column name="base_website" type="VARCHAR(512)"/>
+            <column name="year" type="INT"/>
+            <column name="parent_id" type="BIGINT"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- Foreign key: parent_id → events.id (self-reference) -->
+    <changeSet id="018-2" author="savvy">
+        <addForeignKeyConstraint
+                baseTableName="events"
+                baseColumnNames="parent_id"
+                constraintName="fk_events_parent"
+                referencedTableName="events"
+                referencedColumnNames="id"
+                onDelete="SET NULL"/>
+    </changeSet>
+
+    <!-- Make start_date and max_participants nullable (parent camp events have no dates/capacity) -->
+    <changeSet id="018-3" author="savvy">
+        <dropNotNullConstraint tableName="events" columnName="start_date" columnDataType="DATE"/>
+        <dropNotNullConstraint tableName="events" columnName="max_participants" columnDataType="INT"/>
+    </changeSet>
+
+</databaseChangeLog>

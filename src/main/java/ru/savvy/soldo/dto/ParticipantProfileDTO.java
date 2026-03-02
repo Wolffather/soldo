@@ -14,7 +14,6 @@ public class ParticipantProfileDTO {
     private String fullName;
 
     private LocalDate birthDate;
-    private String school;
     private String medicalNotes;
 
     @NotBlank(message = "ФИО родителя обязательно")

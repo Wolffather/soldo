@@ -3,6 +3,7 @@ package ru.savvy.soldo.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import ru.savvy.soldo.dto.EventCategoryDTO;
 import ru.savvy.soldo.model.enums.EventFormat;
@@ -48,17 +49,20 @@ public class EventCategoryController {
         return ResponseEntity.ok(categoryService.getBySeason(season));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     @PostMapping
     public ResponseEntity<EventCategoryDTO> create(@Valid @RequestBody EventCategoryDTO dto) {
         return ResponseEntity.ok(categoryService.create(dto));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     @PutMapping("/{id}")
     public ResponseEntity<EventCategoryDTO> update(
             @PathVariable Long id, @Valid @RequestBody EventCategoryDTO dto) {
         return ResponseEntity.ok(categoryService.update(id, dto));
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         categoryService.delete(id);

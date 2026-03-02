@@ -37,7 +37,6 @@ public class ParticipantProfileServiceImpl implements ParticipantProfileService 
 
         profile.setFullName(dto.getFullName());
         profile.setBirthDate(dto.getBirthDate());
-        profile.setSchool(dto.getSchool());
         profile.setMedicalNotes(dto.getMedicalNotes());
         profile.setParentFullName(dto.getParentFullName());
         profile.setParentPhone(dto.getParentPhone());
@@ -60,7 +59,6 @@ public class ParticipantProfileServiceImpl implements ParticipantProfileService 
         dto.setUserId(p.getUser().getId());
         dto.setFullName(p.getFullName());
         dto.setBirthDate(p.getBirthDate());
-        dto.setSchool(p.getSchool());
         dto.setMedicalNotes(p.getMedicalNotes());
         dto.setParentFullName(p.getParentFullName());
         dto.setParentPhone(p.getParentPhone());

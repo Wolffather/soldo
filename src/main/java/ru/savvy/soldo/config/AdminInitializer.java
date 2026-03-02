@@ -19,7 +19,6 @@ public class AdminInitializer implements CommandLineRunner {
         if (userRepository.findByUsername("admin").isEmpty()) {
             User admin = User.builder()
                     .username("admin")
-                    .telegramId(1111L)
                     .passwordHash(passwordEncoder.encode("admin"))
                     .role("ADMIN")
                     .build();

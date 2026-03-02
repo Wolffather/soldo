@@ -7,6 +7,7 @@ import ru.savvy.soldo.dto.*;
 import ru.savvy.soldo.dto.request.PaymentUpdateRequest;
 import ru.savvy.soldo.dto.response.BookingResponse;
 import ru.savvy.soldo.dto.response.BookingSummaryResponse;
+import ru.savvy.soldo.exception.EntityFinder;
 import ru.savvy.soldo.exception.IllegalOperationException;
 import ru.savvy.soldo.exception.NotFoundException;
 import ru.savvy.soldo.model.Booking;
@@ -31,14 +32,12 @@ import ru.savvy.soldo.service.NotificationService;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.List;
-import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 public class BookingServiceImpl implements BookingService {
-
-    private static final Set<EventFormat> CAMP_FORMATS = Set.of(EventFormat.CAMP_CITY, EventFormat.CAMP_OUTDOOR);
 
     private final BookingRepository bookingRepository;
     private final EventRepository eventRepository;
@@ -71,7 +70,8 @@ public class BookingServiceImpl implements BookingService {
             paymentDeadline = LocalDate.now().plusDays(7);
         }
 
-        BookingStatus status = dto.getStatus();
+        // Если клиент не передал статус — используем PENDING (место занято, ожидает подтверждения)
+        BookingStatus status = dto.getStatus() != null ? dto.getStatus() : BookingStatus.PENDING;
 
         Booking booking = Booking.builder()
                 .user(user)
@@ -84,20 +84,22 @@ public class BookingServiceImpl implements BookingService {
 
         booking = bookingRepository.save(booking);
 
-        if (event.getCategory() != null && CAMP_FORMATS.contains(event.getCategory().getFormat())) {
+        if (event.getCategory() != null && EventFormat.SESSION_FORMATS.contains(event.getCategory().getFormat())) {
             createDocumentsForCampBooking(booking, event.getCategory().getFormat().name());
         }
 
         switch (status) {
-            case BookingStatus.PENDING -> summaryRepository.onCreatePending(booking.getId());
-            case BookingStatus.CONFIRMED -> summaryRepository.onCreateConfirmed(booking.getId());
+            case BookingStatus.PENDING -> summaryRepository.onCreatePending(event.getId());
+            case BookingStatus.CONFIRMED -> summaryRepository.onCreateConfirmed(event.getId());
         }
 
+        String statusLabel = status == BookingStatus.CONFIRMED
+                ? "подтверждено" : "ожидает подтверждения";
         notificationService.createAndSend(
                 userId, event.getId(), booking.getId(),
                 NotificationType.BOOKING_CONFIRMED,
-                String.format("✅ Вы записались на <b>%s</b>!\nСтатус: ожидает подтверждения",
-                              event.getTitle()));
+                String.format("✅ Вы записались на <b>%s</b>!\nСтатус: %s",
+                              event.getTitle(), statusLabel));
 
         return toResponse(booking);
     }
@@ -133,7 +135,7 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public BookingResponse confirm(Long id) {
-        Booking booking = findOrThrow(id);
+        Booking booking = EntityFinder.findOrThrow(bookingRepository.findByIdWithCategory(id), "Бронирование не найдено: " + id);
 
         if (!BookingStatus.PENDING.equals(booking.getStatus())) {
             throw new IllegalOperationException("Можно подтвердить только бронирование в статусе PENDING");
@@ -141,7 +143,7 @@ public class BookingServiceImpl implements BookingService {
 
         booking.setStatus(BookingStatus.CONFIRMED);
         booking = bookingRepository.save(booking);
-        summaryRepository.onConfirm(booking.getId());
+        summaryRepository.onConfirm(booking.getEvent().getId());
 
         notificationService.createAndSend(
                 booking.getUser().getId(),
@@ -157,14 +159,23 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public BookingResponse cancel(Long id) {
-        Booking booking = findOrThrow(id);
+        Booking booking = EntityFinder.findOrThrow(bookingRepository.findByIdWithCategory(id), "Бронирование не найдено: " + id);
 
         if (BookingStatus.CANCELLED.equals(booking.getStatus())) {
             throw new IllegalOperationException("Бронирование уже отменено");
         }
 
+        BookingStatus previousStatus = booking.getStatus();
+        Long eventId = booking.getEvent().getId();
+
         booking.setStatus(BookingStatus.CANCELLED);
         booking = bookingRepository.save(booking);
+
+        if (previousStatus == BookingStatus.CONFIRMED) {
+            summaryRepository.onCancelFromConfirmed(eventId);
+        } else if (previousStatus == BookingStatus.PENDING) {
+            summaryRepository.onCancelFromPending(eventId);
+        }
 
         notificationService.createAndSend(
                 booking.getUser().getId(),
@@ -180,7 +191,7 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public BookingResponse updatePayment(Long id, PaymentUpdateRequest request) {
-        Booking booking = findOrThrow(id);
+        Booking booking = EntityFinder.findOrThrow(bookingRepository.findByIdWithCategory(id), "Бронирование не найдено: " + id);
 
         PaymentStatus newStatus = PaymentStatus.valueOf(request.getPaymentStatus());
         booking.setPaymentStatus(newStatus);
@@ -205,6 +216,12 @@ public class BookingServiceImpl implements BookingService {
         return toResponse(bookingRepository.save(booking));
     }
 
+    @Override
+    public BigDecimal getMonthlyRevenue() {
+        LocalDateTime startOfMonth = YearMonth.now().atDay(1).atStartOfDay();
+        return bookingRepository.getMonthlyRevenue(startOfMonth);
+    }
+
     private void createDocumentsForCampBooking(Booking booking, String categoryFormat) {
         List<DocumentTemplate> templates = documentTemplateRepository.findByCategoryFormat(categoryFormat);
         List<BookingDocument> docs = templates.stream()
@@ -218,18 +235,18 @@ public class BookingServiceImpl implements BookingService {
         bookingDocumentRepository.saveAll(docs);
     }
 
-    private Booking findOrThrow(Long id) {
-        return bookingRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Бронирование не найдено: " + id));
-    }
-
     private BookingResponse toResponse(Booking b) {
+        String categoryFormat = (b.getEvent().getCategory() != null)
+                ? b.getEvent().getCategory().getFormat().name()
+                : null;
+
         return BookingResponse.builder()
                 .id(b.getId())
                 .userId(b.getUser().getId())
                 .userName(b.getUser().getFirstName())
                 .eventId(b.getEvent().getId())
                 .eventTitle(b.getEvent().getTitle())
+                .categoryFormat(categoryFormat)
                 .status(String.valueOf(b.getStatus()))
                 .paymentStatus(b.getPaymentStatus() != null ? b.getPaymentStatus().name() : null)
                 .amountDue(b.getAmountDue())

@@ -39,6 +39,16 @@ telegram:
     secret: ${TELEGRAM_BOT_SECRET}
     token: ${TELEGRAM_BOT_TOKEN:}
 
+vk:
+  client:
+    id: ${VK_CLIENT_ID}
+    secret: ${VK_CLIENT_SECRET}
+
+yandex:
+  client:
+    id: ${YANDEX_CLIENT_ID}
+    secret: ${YANDEX_CLIENT_SECRET}
+
 server:
   port: ${SERVER_PORT:8080}
   address: 0.0.0.0

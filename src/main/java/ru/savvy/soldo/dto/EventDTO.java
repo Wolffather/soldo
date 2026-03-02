@@ -2,10 +2,11 @@ package ru.savvy.soldo.dto;
 
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import ru.savvy.soldo.annotation.ValidDateOrder;
 
 import java.math.BigDecimal;
@@ -13,6 +14,8 @@ import java.time.LocalDate;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @ValidDateOrder
 public class EventDTO {
 
@@ -21,8 +24,7 @@ public class EventDTO {
     @NotBlank(message = "Название обязательно")
     private String title;
 
-    @NotNull(message = "Дата начала обязательна")
-    @FutureOrPresent(message = "Дата окончания не может быть в прошлом")
+    @FutureOrPresent(message = "Дата начала не может быть в прошлом")
     private LocalDate startDate;
 
     @FutureOrPresent(message = "Дата окончания не может быть в прошлом")
@@ -31,7 +33,6 @@ public class EventDTO {
     @Positive(message = "Цена должна быть положительной")
     private BigDecimal price;
 
-    @NotNull(message = "Количество участников обязательно")
     @Positive(message = "Количество участников должно быть положительным")
     private Integer maxParticipants;
 
@@ -43,4 +44,21 @@ public class EventDTO {
 
     private String status;
     private String createdAt;
+
+    /**
+     * ID of the Season this event belongs to.
+     * Required for events of type SESSION_OUTDOOR or SESSION_CITY.
+     */
+    private Long seasonId;
+
+    /**
+     * Read-only: title of the linked season (for display purposes).
+     */
+    private String seasonTitle;
+
+    /**
+     * Number of available spots.
+     * Computed from EventBookingsSummary.numOfParticipants.
+     */
+    private Integer availableSpots;
 }

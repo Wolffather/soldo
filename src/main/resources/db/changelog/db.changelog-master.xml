@@ -30,5 +30,12 @@
     <include file="db/changelog/v3/011-document-templates.xml"/>
     <include file="db/changelog/v3/012-rename-rpg-to-trip.xml"/>
     <include file="db/changelog/v3/013-remove-rpg-category.xml"/>
+    <include file="db/changelog/v3/014-fix-summary-functions.sql"/>
+    <include file="db/changelog/v3/015-create-inquiries.xml"/>
+    <include file="db/changelog/v3/016-oauth-cleanup.xml"/>
+    <include file="db/changelog/v3/017-remove-school.xml"/>
+    <include file="db/changelog/v3/018-add-camp-fields.xml"/>
+    <include file="db/changelog/v3/019-separate-seasons.xml"/>
+    <include file="db/changelog/v3/020-create-reviews.xml"/>
 
 </databaseChangeLog>

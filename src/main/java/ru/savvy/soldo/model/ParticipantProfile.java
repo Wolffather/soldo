@@ -28,8 +28,6 @@ public class ParticipantProfile {
     @Column(name = "birth_date")
     private LocalDate birthDate;
 
-    private String school;
-
     @Column(name = "medical_notes")
     private String medicalNotes;
 

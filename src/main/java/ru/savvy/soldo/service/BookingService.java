@@ -5,6 +5,7 @@ import ru.savvy.soldo.dto.request.PaymentUpdateRequest;
 import ru.savvy.soldo.dto.response.BookingResponse;
 import ru.savvy.soldo.dto.response.BookingSummaryResponse;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface BookingService {
@@ -24,4 +25,6 @@ public interface BookingService {
     BookingResponse cancel(Long id);
 
     BookingResponse updatePayment(Long id, PaymentUpdateRequest request);
+
+    BigDecimal getMonthlyRevenue();
 }

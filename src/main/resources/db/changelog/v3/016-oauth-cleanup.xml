@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- 1. Drop inquiries table (заменяем на стандартные booking) -->
+    <changeSet id="016-01-drop-inquiries" author="dev">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="inquiries"/>
+        </preConditions>
+        <dropTable tableName="inquiries"/>
+    </changeSet>
+
+    <!-- 2. Drop unique constraint on telegram_id, then the column itself -->
+    <changeSet id="016-02-drop-telegram-id" author="dev">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="users" columnName="telegram_id"/>
+        </preConditions>
+        <!-- Drop unique constraint first (name from v1/001 migration) -->
+        <sql>ALTER TABLE users DROP CONSTRAINT IF EXISTS uq_users_telegram_id</sql>
+        <dropColumn tableName="users" columnName="telegram_id"/>
+    </changeSet>
+
+    <!-- 3. Add unique constraint on (first_name, last_name, username)
+         PostgreSQL treats NULLs as distinct in unique indexes, so only
+         fully-populated combinations are deduplicated. -->
+    <changeSet id="016-03-unique-name-username" author="dev">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <uniqueConstraintExists tableName="users" constraintName="uq_users_name_username"/>
+            </not>
+        </preConditions>
+        <addUniqueConstraint
+                tableName="users"
+                columnNames="first_name, last_name, username"
+                constraintName="uq_users_name_username"/>
+    </changeSet>
+
+</databaseChangeLog>

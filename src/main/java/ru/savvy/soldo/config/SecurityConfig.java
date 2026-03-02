@@ -55,8 +55,9 @@ public class SecurityConfig {
 
                         .requestMatchers(HttpMethod.GET, "/categories/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/events/**").permitAll()
-
-                        .requestMatchers("/admin/**").hasAnyRole("ADMIN", "MODERATOR")
+                        .requestMatchers(HttpMethod.GET, "/seasons/public").permitAll()
+                        .requestMatchers("/public/**").permitAll()
+.requestMatchers("/admin/**").hasAnyRole("ADMIN", "MODERATOR")
                         .requestMatchers(HttpMethod.POST, "/categories/**").hasAnyRole("ADMIN", "MODERATOR")
                         .requestMatchers(HttpMethod.PUT, "/categories/**").hasAnyRole("ADMIN", "MODERATOR")
                         .requestMatchers(HttpMethod.DELETE, "/categories/**").hasAnyRole("ADMIN", "MODERATOR")
@@ -73,6 +74,7 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(List.of(
                 "http://localhost:3000",
+                "http://localhost:3001",
                 "http://localhost:5173"
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));

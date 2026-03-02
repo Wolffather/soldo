@@ -4,14 +4,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 import ru.savvy.soldo.dto.EventDTO;
-import ru.savvy.soldo.model.Event;
 
-
+import java.util.List;
 
 public interface EventService {
 
-
     Page<EventDTO> getAll(Pageable pageable);
+
+    List<EventDTO> getUpcoming(String season);
 
     EventDTO create(EventDTO dto);
 

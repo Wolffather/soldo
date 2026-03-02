@@ -1,9 +1,11 @@
 package ru.savvy.soldo.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.savvy.soldo.dto.request.TelegramAuthRequest;
+import ru.savvy.soldo.dto.request.UserRegisterRequest;
 import ru.savvy.soldo.model.UserAuthProvider;
 import ru.savvy.soldo.model.enums.AuthProviderType;
 import ru.savvy.soldo.model.enums.UserRole;
@@ -23,6 +25,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository repository;
     private final UserAuthProviderRepository authProviderRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public Optional<User> findByUsername(String username) {
@@ -42,12 +45,11 @@ public class UserServiceImpl implements UserService {
                     existing.setFirstName(request.getFirstName());
                     existing.setLastName(request.getLastName());
                     existing.setUsername(request.getUsername());
-                    existing.setTelegramId(request.getTelegramId());
+                    // telegram_id column removed — no longer setting it
                     return repository.save(existing);
                 })
                 .orElseGet(() -> {
                     User newUser = User.builder()
-                            .telegramId(request.getTelegramId())
                             .firstName(request.getFirstName())
                             .lastName(request.getLastName())
                             .username(request.getUsername())
@@ -97,6 +99,72 @@ public class UserServiceImpl implements UserService {
                     "Уже выданы права админа пользователю с telegramId=" + telegramId);
         }
         user.setRole(UserRole.ADMIN.name());
+        return repository.save(user);
+    }
+
+    @Override
+    @Transactional
+    public User grantAdminRoleById(Long id) {
+        User user = findById(id);
+        if (user.hasRole(UserRole.ADMIN)) {
+            throw new RoleAlreadyExistsException(
+                    "Уже выданы права админа пользователю с id=" + id);
+        }
+        user.setRole(UserRole.ADMIN.name());
+        return repository.save(user);
+    }
+
+    @Override
+    @Transactional
+    public User findOrCreateByOAuth(AuthProviderType provider, String providerUserId,
+                                     String firstName, String lastName, String username) {
+        // 1. Look up existing auth provider entry
+        return authProviderRepository
+                .findByProviderAndProviderUserId(provider, providerUserId)
+                .map(UserAuthProvider::getUser)
+                .orElseGet(() -> {
+                    // 2. Try to find user by name+username for cross-provider deduplication
+                    User user = null;
+                    if (username != null && !username.isBlank()
+                            && firstName != null && lastName != null) {
+                        user = repository
+                                .findByFirstNameAndLastNameAndUsername(firstName, lastName, username)
+                                .orElse(null);
+                    }
+
+                    // 3. Create new user if still not found
+                    if (user == null) {
+                        user = repository.save(User.builder()
+                                .firstName(firstName)
+                                .lastName(lastName)
+                                .username(username)
+                                .role(UserRole.USER.name())
+                                .build());
+                    }
+
+                    // 4. Register this OAuth provider for the user
+                    authProviderRepository.save(UserAuthProvider.builder()
+                            .user(user)
+                            .provider(provider)
+                            .providerUserId(providerUserId)
+                            .build());
+
+                    return user;
+                });
+    }
+
+    @Override
+    @Transactional
+    public User registerUser(UserRegisterRequest request) {
+        User user = User.builder()
+                .username(request.getUsername())
+                .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .email(request.getEmail())
+                .phone(request.getPhone())
+                .role(UserRole.USER.name())
+                .build();
         return repository.save(user);
     }
 }

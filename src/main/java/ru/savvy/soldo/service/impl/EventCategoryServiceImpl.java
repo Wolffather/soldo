@@ -3,7 +3,7 @@ package ru.savvy.soldo.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.savvy.soldo.dto.EventCategoryDTO;
-import ru.savvy.soldo.exception.NotFoundException;
+import ru.savvy.soldo.exception.EntityFinder;
 import ru.savvy.soldo.model.EventCategory;
 import ru.savvy.soldo.model.enums.EventFormat;
 import ru.savvy.soldo.model.enums.SeasonType;
@@ -27,7 +27,7 @@ public class EventCategoryServiceImpl implements EventCategoryService {
 
     @Override
     public EventCategoryDTO getById(Long id) {
-        return toDTO(findOrThrow(id));
+        return toDTO(EntityFinder.findOrThrow(categoryRepository.findById(id), "Категория не найдена: " + id));
     }
 
     @Override
@@ -58,7 +58,7 @@ public class EventCategoryServiceImpl implements EventCategoryService {
 
     @Override
     public EventCategoryDTO update(Long id, EventCategoryDTO dto) {
-        EventCategory category = findOrThrow(id);
+        EventCategory category = EntityFinder.findOrThrow(categoryRepository.findById(id), "Категория не найдена: " + id);
         category.setName(dto.getName());
         category.setFormat(EventFormat.valueOf(dto.getFormat()));
         category.setSeason(dto.getSeason() != null ? SeasonType.valueOf(dto.getSeason()) : null);
@@ -69,13 +69,8 @@ public class EventCategoryServiceImpl implements EventCategoryService {
 
     @Override
     public void delete(Long id) {
-        findOrThrow(id);
+        EntityFinder.findOrThrow(categoryRepository.findById(id), "Категория не найдена: " + id);
         categoryRepository.deleteById(id);
-    }
-
-    private EventCategory findOrThrow(Long id) {
-        return categoryRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Категория не найдена: " + id));
     }
 
     private EventCategoryDTO toDTO(EventCategory c) {

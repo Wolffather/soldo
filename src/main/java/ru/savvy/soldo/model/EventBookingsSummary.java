@@ -34,10 +34,10 @@ public class EventBookingsSummary {
     @Column(name = "num_of_participants", nullable = false)
     private Integer numOfParticipants ;
 
-    @Column(name = "pending_bookings")
+    @Column(name = "pending_bookings", nullable = false)
     private Long pendingBookings;
 
-    @Column(name = "cancelled_bookings")
+    @Column(name = "cancelled_bookings", nullable = false)
     private Long cancelledBookings;
 
     @Column(name = "last_updated", nullable = false)
@@ -54,7 +54,10 @@ public class EventBookingsSummary {
                 .event(event)
                 .totalBookings(0)
                 .confirmedBookings(0)
-                .numOfParticipants(event.getMaxParticipants())
+                .pendingBookings(0L)
+                .cancelledBookings(0L)
+                // Parent camp events have no maxParticipants — default to 0
+                .numOfParticipants(event.getMaxParticipants() != null ? event.getMaxParticipants() : 0)
                 .lastUpdated(LocalDateTime.now())
                 .build();
     }

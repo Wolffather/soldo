@@ -14,6 +14,8 @@ public class BookingResponse {
     private String userName;
     private Long eventId;
     private String eventTitle;
+    /** Формат категории события: CAMP_CITY, CAMP_OUTDOOR, TRIP, RECURRING, ONE_TIME */
+    private String categoryFormat;
     private String status;
     private String paymentStatus;
     private BigDecimal amountDue;

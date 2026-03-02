@@ -11,7 +11,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByUsername(String username);
 
-    Optional<User> findByTelegramId(Long telegramId);
-
-    boolean existsByTelegramId(Long telegramId);
+    Optional<User> findByFirstNameAndLastNameAndUsername(
+            String firstName, String lastName, String username);
 }

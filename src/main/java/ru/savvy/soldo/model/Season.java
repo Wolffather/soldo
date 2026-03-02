@@ -3,18 +3,18 @@ package ru.savvy.soldo.model;
 import jakarta.persistence.*;
 import lombok.*;
 import ru.savvy.soldo.model.enums.EventStatus;
+import ru.savvy.soldo.model.enums.SeasonType;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "events")
+@Table(name = "seasons")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Event {
+public class Season {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,42 +23,37 @@ public class Event {
     @Column(nullable = false)
     private String title;
 
+    @Column(nullable = false)
+    private Integer year;
+
+    @Column(columnDefinition = "TEXT")
     private String description;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id")
-    private EventCategory category;
+    @Column(name = "base_name")
+    private String baseName;
 
-    @Column(name = "start_date")
-    private LocalDate startDate;
-
-    @Column(name = "end_date")
-    private LocalDate endDate;
-
-    @Column(name = "max_participants")
-    private Integer maxParticipants;
-
-    @Column(name = "game_master")
-    private String gameMaster;
+    @Column(name = "base_website")
+    private String baseWebsite;
 
     @Column(precision = 10, scale = 2)
     @Builder.Default
     private BigDecimal price = BigDecimal.ZERO;
 
+    /**
+     * Which site section this season appears on: WINTER, SUMMER, ALL_YEAR.
+     * Unlike EventCategory.format, this is not an event type — it just
+     * determines where on the public site the season is displayed.
+     */
     @Enumerated(EnumType.STRING)
+    private SeasonType period;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     @Builder.Default
     private EventStatus status = EventStatus.PUBLISHED;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
-
-    /**
-     * Season this event belongs to. Required when category format is
-     * SESSION_OUTDOOR or SESSION_CITY; null for regular events.
-     */
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "season_id")
-    private Season season;
 
     @PrePersist
     protected void onCreate() {
