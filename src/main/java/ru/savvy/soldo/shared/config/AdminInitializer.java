@@ -1,0 +1,28 @@
+package ru.savvy.soldo.shared.config;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Component;
+import ru.savvy.soldo.user.model.User;
+import ru.savvy.soldo.user.repository.UserRepository;
+
+@Component
+@RequiredArgsConstructor
+public class AdminInitializer implements CommandLineRunner {
+
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    @Override
+    public void run(String... args) {
+        if (userRepository.findByUsername("admin").isEmpty()) {
+            User admin = User.builder()
+                    .username("admin")
+                    .passwordHash(passwordEncoder.encode("admin"))
+                    .role("ADMIN")
+                    .build();
+            userRepository.save(admin);
+        }
+    }
+}
