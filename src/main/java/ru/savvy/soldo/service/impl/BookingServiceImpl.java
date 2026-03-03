@@ -11,8 +11,6 @@ import ru.savvy.soldo.exception.EntityFinder;
 import ru.savvy.soldo.exception.IllegalOperationException;
 import ru.savvy.soldo.exception.NotFoundException;
 import ru.savvy.soldo.model.Booking;
-import ru.savvy.soldo.model.BookingDocument;
-import ru.savvy.soldo.model.DocumentTemplate;
 import ru.savvy.soldo.model.Event;
 import ru.savvy.soldo.model.EventBookingsSummary;
 import ru.savvy.soldo.model.User;
@@ -20,19 +18,17 @@ import ru.savvy.soldo.model.enums.BookingStatus;
 import ru.savvy.soldo.model.enums.EventFormat;
 import ru.savvy.soldo.model.enums.NotificationType;
 import ru.savvy.soldo.model.enums.PaymentStatus;
-import ru.savvy.soldo.repository.BookingDocumentRepository;
 import ru.savvy.soldo.repository.BookingRepository;
-import ru.savvy.soldo.repository.DocumentTemplateRepository;
 import ru.savvy.soldo.repository.EventBookingSummaryRepository;
 import ru.savvy.soldo.repository.EventRepository;
 import ru.savvy.soldo.repository.UserRepository;
+import ru.savvy.soldo.service.BookingDocumentService;
 import ru.savvy.soldo.service.BookingService;
 import ru.savvy.soldo.service.NotificationService;
+import ru.savvy.soldo.service.PaymentService;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.YearMonth;
 import java.util.List;
 
 @Service
@@ -44,8 +40,8 @@ public class BookingServiceImpl implements BookingService {
     private final UserRepository userRepository;
     private final EventBookingSummaryRepository summaryRepository;
     private final NotificationService notificationService;
-    private final DocumentTemplateRepository documentTemplateRepository;
-    private final BookingDocumentRepository bookingDocumentRepository;
+    private final PaymentService paymentService;
+    private final BookingDocumentService bookingDocumentService;
 
     @Override
     @Transactional
@@ -85,7 +81,7 @@ public class BookingServiceImpl implements BookingService {
         booking = bookingRepository.save(booking);
 
         if (event.getCategory() != null && EventFormat.SESSION_FORMATS.contains(event.getCategory().getFormat())) {
-            createDocumentsForCampBooking(booking, event.getCategory().getFormat().name());
+            bookingDocumentService.createDocumentsForBooking(booking, event.getCategory().getFormat().name());
         }
 
         switch (status) {
@@ -191,48 +187,12 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public BookingResponse updatePayment(Long id, PaymentUpdateRequest request) {
-        Booking booking = EntityFinder.findOrThrow(bookingRepository.findByIdWithCategory(id), "Бронирование не найдено: " + id);
-
-        PaymentStatus newStatus = PaymentStatus.valueOf(request.getPaymentStatus());
-        booking.setPaymentStatus(newStatus);
-
-        if (request.getAmountPaid() != null) {
-            booking.setAmountPaid(request.getAmountPaid());
-        }
-
-        if (newStatus == PaymentStatus.PAID) {
-            booking.setPaymentDate(LocalDateTime.now());
-            booking.setAmountPaid(booking.getAmountDue());
-
-            notificationService.createAndSend(
-                    booking.getUser().getId(),
-                    booking.getEvent().getId(),
-                    booking.getId(),
-                    NotificationType.BOOKING_CONFIRMED,
-                    String.format("💰 Оплата за <b>%s</b> получена. Спасибо!",
-                                  booking.getEvent().getTitle()));
-        }
-
-        return toResponse(bookingRepository.save(booking));
+        return toResponse(paymentService.processPaymentUpdate(id, request));
     }
 
     @Override
     public BigDecimal getMonthlyRevenue() {
-        LocalDateTime startOfMonth = YearMonth.now().atDay(1).atStartOfDay();
-        return bookingRepository.getMonthlyRevenue(startOfMonth);
-    }
-
-    private void createDocumentsForCampBooking(Booking booking, String categoryFormat) {
-        List<DocumentTemplate> templates = documentTemplateRepository.findByCategoryFormat(categoryFormat);
-        List<BookingDocument> docs = templates.stream()
-                .map(template -> {
-                    BookingDocument doc = new BookingDocument();
-                    doc.setBooking(booking);
-                    doc.setDocumentTemplate(template);
-                    return doc;
-                })
-                .toList();
-        bookingDocumentRepository.saveAll(docs);
+        return paymentService.getMonthlyRevenue();
     }
 
     private BookingResponse toResponse(Booking b) {
