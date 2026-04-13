@@ -3,9 +3,9 @@ package ru.savvy.soldo.booking.controller;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import ru.savvy.soldo.booking.dto.BookingDTO;
+import ru.savvy.soldo.booking.dto.AdminBookingRequest;
 import ru.savvy.soldo.booking.dto.PaymentUpdateRequest;
 import ru.savvy.soldo.booking.dto.BookingResponse;
 import ru.savvy.soldo.booking.dto.BookingSummaryResponse;
@@ -21,23 +21,17 @@ public class BookingController {
 
     private final BookingService bookingService;
 
-    @PostMapping
-    public ResponseEntity<BookingResponse> create(
-            @Valid @RequestBody BookingDTO dto,
-            Authentication auth) {
-        Long userId = Long.parseLong(auth.getName());
-        return ResponseEntity.ok(bookingService.create(dto, userId));
+    /** Администратор создаёт бронирование вручную (гость без аккаунта) */
+    @PostMapping("/admin")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<BookingResponse> createByAdmin(
+            @Valid @RequestBody AdminBookingRequest request) {
+        return ResponseEntity.ok(bookingService.createByAdmin(request));
     }
 
     @GetMapping("/event/{eventId}")
     public ResponseEntity<List<BookingResponse>> getByEvent(@PathVariable Long eventId) {
         return ResponseEntity.ok(bookingService.getByEventId(eventId));
-    }
-
-    @GetMapping("/my")
-    public ResponseEntity<List<BookingResponse>> getMyBookings(Authentication auth) {
-        Long userId = Long.parseLong(auth.getName());
-        return ResponseEntity.ok(bookingService.getByUserId(userId));
     }
 
     @GetMapping("/event/{eventId}/summary")

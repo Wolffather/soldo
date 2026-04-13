@@ -33,6 +33,11 @@ public class EventDTO {
     @Positive(message = "Цена должна быть положительной")
     private BigDecimal price;
 
+    /**
+     * Цена при наличии сертификата ПФДО. Только для событий SESSION_OUTDOOR. Необязательное.
+     */
+    private BigDecimal priceWithCertificate;
+
     @Positive(message = "Количество участников должно быть положительным")
     private Integer maxParticipants;
 
@@ -44,17 +49,6 @@ public class EventDTO {
 
     private String status;
     private String createdAt;
-
-    /**
-     * ID of the Season this event belongs to.
-     * Required for events of type SESSION_OUTDOOR or SESSION_CITY.
-     */
-    private Long seasonId;
-
-    /**
-     * Read-only: title of the linked season (for display purposes).
-     */
-    private String seasonTitle;
 
     /**
      * Number of available spots.

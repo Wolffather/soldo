@@ -2,11 +2,13 @@ package ru.savvy.soldo.user.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Filter;
 import ru.savvy.soldo.user.model.AuthProviderType;
 
 import java.time.LocalDateTime;
 
 @Entity
+@Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
 @Table(
     name = "user_auth_providers",
     uniqueConstraints = @UniqueConstraint(
@@ -37,6 +39,9 @@ public class UserAuthProvider {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @Column(name = "tenant_id", nullable = false)
+    private Long tenantId;
 
     @PrePersist
     protected void onCreate() {

@@ -41,4 +41,8 @@ public interface EventBookingSummaryRepository
     @Query(value = "SELECT booking_on_delete(:eventId)",
             nativeQuery = true)
     Integer onDelete(@Param("eventId") Long eventId);
+
+    /** Количество свободных мест для события (используется ботом). */
+    @Query("SELECT s.numOfParticipants FROM EventBookingsSummary s WHERE s.event.id = :eventId")
+    Integer findAvailableSeatsByEventId(@Param("eventId") Long eventId);
 }

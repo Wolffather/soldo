@@ -14,6 +14,7 @@ import ru.savvy.soldo.shared.exception.RoleAlreadyExistsException;
 import ru.savvy.soldo.user.model.User;
 import ru.savvy.soldo.user.repository.UserAuthProviderRepository;
 import ru.savvy.soldo.user.repository.UserRepository;
+import ru.savvy.soldo.tenant.TenantContext;
 import ru.savvy.soldo.user.service.UserService;
 
 import java.util.List;
@@ -54,6 +55,8 @@ public class UserServiceImpl implements UserService {
                             .lastName(request.getLastName())
                             .username(request.getUsername())
                             .role(UserRole.USER.name())
+                            .tenantId(TenantContext.getCurrentTenantId() != null
+                                    ? TenantContext.getCurrentTenantId() : 1L)
                             .build();
                     newUser = repository.save(newUser);
 
@@ -61,6 +64,7 @@ public class UserServiceImpl implements UserService {
                             .user(newUser)
                             .provider(AuthProviderType.TELEGRAM)
                             .providerUserId(providerUserId)
+                            .tenantId(newUser.getTenantId())
                             .build();
                     authProviderRepository.save(authProvider);
 
@@ -134,11 +138,14 @@ public class UserServiceImpl implements UserService {
 
                     // 3. Create new user if still not found
                     if (user == null) {
+                        Long tenantId = TenantContext.getCurrentTenantId() != null
+                                ? TenantContext.getCurrentTenantId() : 1L;
                         user = repository.save(User.builder()
                                 .firstName(firstName)
                                 .lastName(lastName)
                                 .username(username)
                                 .role(UserRole.USER.name())
+                                .tenantId(tenantId)
                                 .build());
                     }
 
@@ -147,6 +154,7 @@ public class UserServiceImpl implements UserService {
                             .user(user)
                             .provider(provider)
                             .providerUserId(providerUserId)
+                            .tenantId(user.getTenantId())
                             .build());
 
                     return user;
@@ -156,6 +164,8 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public User registerUser(UserRegisterRequest request) {
+        Long tenantId = TenantContext.getCurrentTenantId() != null
+                ? TenantContext.getCurrentTenantId() : 1L;
         User user = User.builder()
                 .username(request.getUsername())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
@@ -164,6 +174,7 @@ public class UserServiceImpl implements UserService {
                 .email(request.getEmail())
                 .phone(request.getPhone())
                 .role(UserRole.USER.name())
+                .tenantId(tenantId)
                 .build();
         return repository.save(user);
     }

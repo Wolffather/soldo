@@ -1,0 +1,12 @@
+target/
+uploads/
+.idea/
+.vscode/
+*.iml
+.git/
+.gitignore
+README.md
+HELP.md
+compose.yml
+liquibase.*
+!.mvn/

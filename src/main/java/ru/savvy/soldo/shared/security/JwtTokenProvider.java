@@ -28,16 +28,24 @@ public class JwtTokenProvider {
     }
 
     public String generateToken(String userId, String role) {
+        return generateToken(userId, role, null);
+    }
+
+    public String generateToken(String userId, String role, Long tenantId) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + expirationMs);
 
-        return Jwts.builder()
+        var builder = Jwts.builder()
                 .subject(userId)
                 .claim("role", role)
                 .issuedAt(now)
-                .expiration(expiry)
-                .signWith(key)
-                .compact();
+                .expiration(expiry);
+
+        if (tenantId != null) {
+            builder.claim("tenantId", tenantId);
+        }
+
+        return builder.signWith(key).compact();
     }
 
     public boolean validateToken(String token) {
@@ -55,6 +63,10 @@ public class JwtTokenProvider {
 
     public String getRoleFromToken(String token) {
         return parseToken(token).get("role", String.class);
+    }
+
+    public Long getTenantIdFromToken(String token) {
+        return parseToken(token).get("tenantId", Long.class);
     }
 
     private Claims parseToken(String token) {

@@ -55,8 +55,10 @@ public class SecurityConfig {
 
                         .requestMatchers(HttpMethod.GET, "/categories/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/events/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/seasons/public").permitAll()
                         .requestMatchers("/public/**").permitAll()
+                        .requestMatchers("/widget.js").permitAll()
+                        .requestMatchers("/public/bot/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/files/**").permitAll()
 .requestMatchers("/admin/**").hasAnyRole("ADMIN", "MODERATOR")
                         .requestMatchers(HttpMethod.POST, "/categories/**").hasAnyRole("ADMIN", "MODERATOR")
                         .requestMatchers(HttpMethod.PUT, "/categories/**").hasAnyRole("ADMIN", "MODERATOR")
@@ -71,17 +73,29 @@ public class SecurityConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
+        // Public widget endpoints: allow any origin (widget is embedded on third-party sites)
+        CorsConfiguration publicConfig = new CorsConfiguration();
+        publicConfig.setAllowedOriginPatterns(List.of("*"));
+        publicConfig.setAllowedMethods(List.of("GET", "POST", "OPTIONS"));
+        publicConfig.setAllowedHeaders(List.of("*"));
+        publicConfig.setAllowCredentials(false);
+
+        // Authenticated/admin endpoints: restrict to known origins
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of(
-                "http://localhost:3000",
-                "http://localhost:3001",
-                "http://localhost:5173"
+        // setAllowedOriginPatterns supports wildcards and works with credentials:true
+        // allows all localhost ports + any ngrok subdomain (changes on each restart)
+        config.setAllowedOriginPatterns(List.of(
+                "http://localhost:*",
+                "https://*.ngrok.io",
+                "https://*.ngrok-free.app"
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        // More specific path registered first takes priority
+        source.registerCorsConfiguration("/public/**", publicConfig);
         source.registerCorsConfiguration("/**", config);
         return source;
     }

@@ -1,27 +1,28 @@
 package ru.savvy.soldo.booking.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.savvy.soldo.booking.dto.PaymentUpdateRequest;
 import ru.savvy.soldo.shared.exception.EntityFinder;
 import ru.savvy.soldo.booking.model.Booking;
-import ru.savvy.soldo.notification.model.NotificationType;
 import ru.savvy.soldo.booking.model.PaymentStatus;
 import ru.savvy.soldo.booking.repository.BookingRepository;
-import ru.savvy.soldo.notification.service.NotificationService;
+import ru.savvy.soldo.notification.service.TelegramSenderService;
 import ru.savvy.soldo.booking.service.PaymentService;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PaymentServiceImpl implements PaymentService {
 
     private final BookingRepository bookingRepository;
-    private final NotificationService notificationService;
+    private final TelegramSenderService telegramSender;
 
     @Override
     @Transactional
@@ -40,13 +41,19 @@ public class PaymentServiceImpl implements PaymentService {
             booking.setPaymentDate(LocalDateTime.now());
             booking.setAmountPaid(booking.getAmountDue());
 
-            notificationService.createAndSend(
-                    booking.getUser().getId(),
-                    booking.getEvent().getId(),
-                    booking.getId(),
-                    NotificationType.BOOKING_CONFIRMED,
-                    String.format("💰 Оплата за <b>%s</b> получена. Спасибо!",
-                                  booking.getEvent().getTitle()));
+            // Telegram-уведомление только если у бронирования есть привязанный чат
+            if (booking.getTelegramChatId() != null) {
+                try {
+                    telegramSender.sendMessage(
+                            booking.getTenantId(),
+                            booking.getTelegramChatId(),
+                            String.format("💰 Оплата за <b>%s</b> получена. Спасибо!",
+                                    booking.getEvent().getTitle()));
+                } catch (Exception e) {
+                    log.warn("Не удалось отправить Telegram-уведомление об оплате для бронирования {}: {}",
+                            booking.getId(), e.getMessage());
+                }
+            }
         }
 
         return bookingRepository.save(booking);

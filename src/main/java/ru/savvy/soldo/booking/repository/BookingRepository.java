@@ -18,12 +18,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("SELECT b FROM Booking b JOIN FETCH b.event e LEFT JOIN FETCH e.category WHERE b.event.id = :eventId")
     List<Booking> findByEventId(@Param("eventId") Long eventId);
 
-    @Query("SELECT b FROM Booking b JOIN FETCH b.event e LEFT JOIN FETCH e.category WHERE b.user.id = :userId")
-    List<Booking> findByUserId(@Param("userId") Long userId);
-
     List<Booking> findByEventIdAndStatus(Long eventId, BookingStatus status);
-
-    boolean existsByUserIdAndEventIdAndStatusNot(Long userId, Long eventId, BookingStatus status);
 
     @Query("SELECT b FROM Booking b JOIN FETCH b.event e LEFT JOIN FETCH e.category " +
            "WHERE b.paymentStatus = 'PENDING' " +
@@ -37,4 +32,16 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     @Query("SELECT b FROM Booking b JOIN FETCH b.event e LEFT JOIN FETCH e.category WHERE b.id = :id")
     Optional<Booking> findByIdWithCategory(@Param("id") Long id);
+
+    // ─── Bot API queries ──────────────────────────────────────────────────────
+
+    boolean existsByTelegramChatIdAndEventIdAndStatusNot(Long telegramChatId, Long eventId, BookingStatus status);
+
+    @Query("SELECT b FROM Booking b JOIN FETCH b.event e LEFT JOIN FETCH e.category " +
+           "WHERE b.telegramChatId = :telegramId " +
+           "AND b.tenantId = :tenantId " +
+           "AND b.status <> ru.savvy.soldo.booking.model.BookingStatus.CANCELLED")
+    List<Booking> findActiveByTelegramChatIdAndTenantId(
+            @Param("telegramId") Long telegramId,
+            @Param("tenantId") Long tenantId);
 }

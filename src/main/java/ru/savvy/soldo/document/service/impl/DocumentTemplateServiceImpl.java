@@ -37,6 +37,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService {
                 .fileUrl(dto.getFileUrl())
                 .categoryFormat(dto.getCategoryFormat())
                 .isRequired(dto.getIsRequired() != null ? dto.getIsRequired() : true)
+                .requiresSignature(dto.getRequiresSignature() != null ? dto.getRequiresSignature() : true)
                 .build();
         return toDTO(repository.save(template));
     }
@@ -50,6 +51,9 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService {
         template.setCategoryFormat(dto.getCategoryFormat());
         if (dto.getIsRequired() != null) {
             template.setIsRequired(dto.getIsRequired());
+        }
+        if (dto.getRequiresSignature() != null) {
+            template.setRequiresSignature(dto.getRequiresSignature());
         }
         return toDTO(repository.save(template));
     }
@@ -68,6 +72,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService {
                 .fileUrl(t.getFileUrl())
                 .categoryFormat(t.getCategoryFormat())
                 .isRequired(t.getIsRequired())
+                .requiresSignature(t.getRequiresSignature())
                 .createdAt(t.getCreatedAt() != null ? t.getCreatedAt().toString() : null)
                 .build();
     }

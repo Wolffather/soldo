@@ -2,12 +2,14 @@ package ru.savvy.soldo.user.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Filter;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "participant_profiles")
+@Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -40,6 +42,38 @@ public class ParticipantProfile {
     @Column(name = "parent_email")
     private String parentEmail;
 
+    // ── Паспортные данные родителя ──────────────────────────────────────────
+
+    @Column(name = "parent_birth_date")
+    private LocalDate parentBirthDate;
+
+    @Column(name = "parent_passport_series", length = 10)
+    private String parentPassportSeries;
+
+    @Column(name = "parent_passport_number", length = 20)
+    private String parentPassportNumber;
+
+    @Column(name = "parent_passport_issued_by", columnDefinition = "TEXT")
+    private String parentPassportIssuedBy;
+
+    @Column(name = "parent_passport_issued_date")
+    private LocalDate parentPassportIssuedDate;
+
+    @Column(name = "registration_address", columnDefinition = "TEXT")
+    private String registrationAddress;
+
+    // ── Документ ребёнка ───────────────────────────────────────────────────
+
+    /** BIRTH_CERTIFICATE или PASSPORT */
+    @Column(name = "child_document_type", length = 50)
+    private String childDocumentType;
+
+    @Column(name = "child_document_series", length = 10)
+    private String childDocumentSeries;
+
+    @Column(name = "child_document_number", length = 20)
+    private String childDocumentNumber;
+
     @Column(name = "consent_personal_data")
     @Builder.Default
     private Boolean consentPersonalData = false;
@@ -50,6 +84,9 @@ public class ParticipantProfile {
 
     @Column(name = "consent_date")
     private LocalDateTime consentDate;
+
+    @Column(name = "tenant_id", nullable = false)
+    private Long tenantId;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

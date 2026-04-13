@@ -30,9 +30,8 @@ public class EventController {
     }
 
     @GetMapping("/upcoming")
-    public ResponseEntity<List<EventDTO>> getUpcoming(
-            @RequestParam(defaultValue = "ALL_YEAR") String season) {
-        return ResponseEntity.ok(service.getUpcoming(season));
+    public ResponseEntity<List<EventDTO>> getUpcoming() {
+        return ResponseEntity.ok(service.getUpcoming(null));
     }
 
     @GetMapping("/{id}")

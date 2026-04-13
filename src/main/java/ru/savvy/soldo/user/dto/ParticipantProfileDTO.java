@@ -25,4 +25,17 @@ public class ParticipantProfileDTO {
     private String parentEmail;
     private Boolean consentPersonalData;
     private Boolean consentPhotoVideo;
+
+    // ── Паспортные данные родителя ──────────────────────────────────────────
+    private LocalDate parentBirthDate;
+    private String parentPassportSeries;
+    private String parentPassportNumber;
+    private String parentPassportIssuedBy;
+    private LocalDate parentPassportIssuedDate;
+    private String registrationAddress;
+
+    // ── Документ ребёнка ───────────────────────────────────────────────────
+    private String childDocumentType;
+    private String childDocumentSeries;
+    private String childDocumentNumber;
 }

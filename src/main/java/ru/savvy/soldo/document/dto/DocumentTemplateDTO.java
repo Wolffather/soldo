@@ -20,5 +20,6 @@ public class DocumentTemplateDTO {
     private String categoryFormat;
 
     private Boolean isRequired;
+    private Boolean requiresSignature;
     private String createdAt;
 }

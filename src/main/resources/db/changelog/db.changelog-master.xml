@@ -1,4 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Мастер-чейнджлог Soldo.
+
+    Все миграции v1–v6, накопившиеся за время разработки, были сконсолидированы
+    в один инициализирующий скрипт init/001-init-schema.xml + functions SQL.
+    Это даёт чистый деплой на новых окружениях и значительно ускоряет старт.
+
+    Для новых изменений схемы — добавляйте файлы в соответствующую директорию,
+    например init/003-*.xml, init/004-*.xml и т.д. (либо создайте v2/ для
+    следующего крупного этапа).
+-->
 <databaseChangeLog
         xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -7,35 +18,11 @@
             http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
 
     <changeSet id="000-create-schema" author="savvy">
-        <sql>
-            CREATE SCHEMA IF NOT EXISTS soldo_schema;
-        </sql>
-        <rollback>
-            DROP SCHEMA IF EXISTS soldo_schema CASCADE;
-        </rollback>
+        <sql>CREATE SCHEMA IF NOT EXISTS soldo_schema;</sql>
+        <rollback>DROP SCHEMA IF EXISTS soldo_schema CASCADE;</rollback>
     </changeSet>
 
-    <include file="db/changelog/v1/001-create-users.xml"/>
-    <include file="db/changelog/v1/002-create-events.xml"/>
-    <include file="db/changelog/v1/003-create-bookings.xml"/>
-    <include file="db/changelog/v1/004-create-summary.xml"/>
-    <include file="db/changelog/v1/005-create-indexes.xml"/>
-    <include file="db/changelog/v1/006-create-functions.sql"/>
-    <include file="db/changelog/v2/add-admin-fields.xml"/>
-    <include file="db/changelog/v2/add-pending-cancelled-to-summary.xml"/>
-    <include file="db/changelog/v2/007-phase1-core.xml"/>
-    <include file="db/changelog/v2/008-cascade-notifications.xml"/>
-    <include file="db/changelog/v3/009-remove-age-add-game-master.xml"/>
-    <include file="db/changelog/v3/010-user-auth-providers.xml"/>
-    <include file="db/changelog/v3/011-document-templates.xml"/>
-    <include file="db/changelog/v3/012-rename-rpg-to-trip.xml"/>
-    <include file="db/changelog/v3/013-remove-rpg-category.xml"/>
-    <include file="db/changelog/v3/014-fix-summary-functions.sql"/>
-    <include file="db/changelog/v3/015-create-inquiries.xml"/>
-    <include file="db/changelog/v3/016-oauth-cleanup.xml"/>
-    <include file="db/changelog/v3/017-remove-school.xml"/>
-    <include file="db/changelog/v3/018-add-camp-fields.xml"/>
-    <include file="db/changelog/v3/019-separate-seasons.xml"/>
-    <include file="db/changelog/v3/020-create-reviews.xml"/>
+    <include file="db/changelog/init/001-init-schema.xml"/>
+    <include file="db/changelog/init/002-booking-summary-functions.sql"/>
 
 </databaseChangeLog>

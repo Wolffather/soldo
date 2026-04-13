@@ -1,6 +1,6 @@
 package ru.savvy.soldo.booking.service;
 
-import ru.savvy.soldo.booking.dto.BookingDTO;
+import ru.savvy.soldo.booking.dto.AdminBookingRequest;
 import ru.savvy.soldo.booking.dto.PaymentUpdateRequest;
 import ru.savvy.soldo.booking.dto.BookingResponse;
 import ru.savvy.soldo.booking.dto.BookingSummaryResponse;
@@ -10,11 +10,10 @@ import java.util.List;
 
 public interface BookingService {
 
-    BookingResponse create(BookingDTO dto, Long userId);
+    /** Администратор создаёт бронирование вручную (всегда гостевое — без аккаунта). */
+    BookingResponse createByAdmin(AdminBookingRequest request);
 
     List<BookingResponse> getByEventId(Long eventId);
-
-    List<BookingResponse> getByUserId(Long userId);
 
     BookingSummaryResponse getSummary(Long eventId);
 

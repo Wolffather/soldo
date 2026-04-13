@@ -34,7 +34,7 @@ public class AdminAuthController {
         }
 
         String token = jwtTokenProvider.generateToken(
-                String.valueOf(user.getId()), user.getRole());
+                String.valueOf(user.getId()), user.getRole(), user.getTenantId());
 
         return ResponseEntity.ok(new TokenResponse(
                 "Bearer " + token, user.getRole(), user.getId()));

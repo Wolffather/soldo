@@ -70,9 +70,9 @@ public class NotificationServiceImpl implements NotificationService {
 
         // Отправляем в Telegram (если у пользователя привязан Telegram через провайдер)
         Long telegramId = getTelegramChatId(user);
-        if (telegramId != null) {
+        if (telegramId != null && user != null) {
             try {
-                telegramSender.sendMessage(telegramId, message);
+                telegramSender.sendMessage(user.getTenantId(), telegramId, message);
                 notification.setSent(true);
                 notification.setSentAt(LocalDateTime.now());
                 notificationRepository.save(notification);
@@ -111,9 +111,9 @@ public class NotificationServiceImpl implements NotificationService {
         for (Notification notification : pending) {
             User user = notification.getUser();
             Long telegramId = getTelegramChatId(user);
-            if (telegramId != null) {
+            if (telegramId != null && user != null) {
                 try {
-                    telegramSender.sendMessage(telegramId, notification.getMessage());
+                    telegramSender.sendMessage(user.getTenantId(), telegramId, notification.getMessage());
                     notification.setSent(true);
                     notification.setSentAt(LocalDateTime.now());
                     notificationRepository.save(notification);

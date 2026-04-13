@@ -2,8 +2,8 @@ package ru.savvy.soldo.event.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Filter;
 import ru.savvy.soldo.event.model.EventStatus;
-import ru.savvy.soldo.season.model.Season;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "events")
+@Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -46,6 +47,14 @@ public class Event {
     @Builder.Default
     private BigDecimal price = BigDecimal.ZERO;
 
+    /**
+     * Reduced price when the participant has a ПФДО certificate (государственный сертификат
+     * персонифицированного финансирования дополнительного образования).
+     * Applicable only for SESSION_OUTDOOR events. Null means not applicable.
+     */
+    @Column(name = "price_with_certificate", precision = 10, scale = 2)
+    private BigDecimal priceWithCertificate;
+
     @Enumerated(EnumType.STRING)
     @Builder.Default
     private EventStatus status = EventStatus.PUBLISHED;
@@ -53,13 +62,8 @@ public class Event {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    /**
-     * Season this event belongs to. Required when category format is
-     * SESSION_OUTDOOR or SESSION_CITY; null for regular events.
-     */
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "season_id")
-    private Season season;
+    @Column(name = "tenant_id", nullable = false)
+    private Long tenantId;
 
     @PrePersist
     protected void onCreate() {

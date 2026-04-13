@@ -2,13 +2,14 @@ package ru.savvy.soldo.event.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Filter;
 import ru.savvy.soldo.event.model.EventFormat;
-import ru.savvy.soldo.season.model.SeasonType;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "event_categories")
+@Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -26,9 +27,6 @@ public class EventCategory {
     @Column(nullable = false)
     private EventFormat format;
 
-    @Enumerated(EnumType.STRING)
-    private SeasonType season;
-
     private String description;
 
     @Column(name = "icon_url")
@@ -36,4 +34,7 @@ public class EventCategory {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @Column(name = "tenant_id", nullable = false)
+    private Long tenantId;
 }

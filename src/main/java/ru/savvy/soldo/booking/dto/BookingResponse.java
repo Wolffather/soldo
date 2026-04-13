@@ -10,8 +10,10 @@ import java.time.LocalDate;
 @Builder
 public class BookingResponse {
     private Long id;
-    private Long userId;
-    private String userName;
+    /** Поля гостевого бронирования (без аккаунта) */
+    private String guestName;
+    private String guestPhone;
+    private String guestEmail;
     private Long eventId;
     private String eventTitle;
     /** Формат категории события: CAMP_CITY, CAMP_OUTDOOR, TRIP, RECURRING, ONE_TIME */
@@ -22,4 +24,12 @@ public class BookingResponse {
     private BigDecimal amountPaid;
     private LocalDate paymentDeadline;
     private String createdAt;
+    private boolean hasCertificate;
+
+    /** Общее кол-во документов для бронирования (не архивных) */
+    private int documentTotal;
+    /** Кол-во подписанных документов */
+    private int documentSigned;
+    /** Кол-во документов, требующих электронной подписи */
+    private int documentRequireSignature;
 }

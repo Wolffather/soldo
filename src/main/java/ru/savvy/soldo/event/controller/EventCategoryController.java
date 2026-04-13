@@ -7,7 +7,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import ru.savvy.soldo.event.dto.EventCategoryDTO;
 import ru.savvy.soldo.event.model.EventFormat;
-import ru.savvy.soldo.season.model.SeasonType;
 import ru.savvy.soldo.event.service.EventCategoryService;
 
 import java.util.Arrays;
@@ -42,11 +41,6 @@ public class EventCategoryController {
     @GetMapping("/by-format/{format}")
     public ResponseEntity<List<EventCategoryDTO>> getByFormat(@PathVariable EventFormat format) {
         return ResponseEntity.ok(categoryService.getByFormat(format));
-    }
-
-    @GetMapping("/by-season/{season}")
-    public ResponseEntity<List<EventCategoryDTO>> getBySeason(@PathVariable SeasonType season) {
-        return ResponseEntity.ok(categoryService.getBySeason(season));
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")

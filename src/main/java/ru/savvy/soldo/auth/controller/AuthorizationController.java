@@ -47,7 +47,7 @@ public class AuthorizationController {
         User user = userService.findOrCreateByTelegramId(request);
 
         String token = jwtTokenProvider.generateToken(
-                user.getId().toString(), user.getRole());
+                user.getId().toString(), user.getRole(), user.getTenantId());
 
         return ResponseEntity.ok(
                 new TokenResponse(token, user.getRole(), user.getId()));
@@ -67,7 +67,7 @@ public class AuthorizationController {
         }
 
         String token = jwtTokenProvider.generateToken(
-                user.getId().toString(), user.getRole());
+                user.getId().toString(), user.getRole(), user.getTenantId());
 
         return ResponseEntity.ok(new TokenResponse(token, user.getRole(), user.getId()));
     }
@@ -83,7 +83,7 @@ public class AuthorizationController {
         User user = userService.registerUser(request);
 
         String token = jwtTokenProvider.generateToken(
-                user.getId().toString(), user.getRole());
+                user.getId().toString(), user.getRole(), user.getTenantId());
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new TokenResponse(token, user.getRole(), user.getId()));

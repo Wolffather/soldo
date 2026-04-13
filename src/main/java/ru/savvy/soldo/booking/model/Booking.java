@@ -2,10 +2,10 @@ package ru.savvy.soldo.booking.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Filter;
 import ru.savvy.soldo.booking.model.BookingStatus;
 import ru.savvy.soldo.booking.model.PaymentStatus;
 import ru.savvy.soldo.event.model.Event;
-import ru.savvy.soldo.user.model.User;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "bookings")
+@Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -23,9 +24,15 @@ public class Booking {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    /** Контактное имя для бронирования (бронирования — всегда гостевые) */
+    @Column(name = "guest_name")
+    private String guestName;
+
+    @Column(name = "guest_phone")
+    private String guestPhone;
+
+    @Column(name = "guest_email")
+    private String guestEmail;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "event_id", nullable = false)
@@ -57,8 +64,20 @@ public class Booking {
 
     private String notes;
 
+    /** Есть ли у участника сертификат ПФДО. Влияет на amountDue при создании бронирования. */
+    @Column(name = "has_certificate", nullable = false)
+    @Builder.Default
+    private boolean hasCertificate = false;
+
+    /** Telegram chat ID — заполняется при бронировании через Telegram-бота. */
+    @Column(name = "telegram_chat_id")
+    private Long telegramChatId;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @Column(name = "tenant_id", nullable = false)
+    private Long tenantId;
 
     @PrePersist
     protected void onCreate() {
