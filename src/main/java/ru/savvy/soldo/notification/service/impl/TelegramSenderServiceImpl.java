@@ -2,6 +2,7 @@ package ru.savvy.soldo.notification.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import ru.savvy.soldo.notification.service.TelegramSenderService;
@@ -9,6 +10,7 @@ import ru.savvy.soldo.tenant.TenantConfigRepository;
 import ru.savvy.soldo.tenant.TenantContext;
 import ru.savvy.soldo.tenant.model.TenantConfig;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,7 +22,10 @@ public class TelegramSenderServiceImpl implements TelegramSenderService {
 
     private final TenantConfigRepository tenantConfigRepository;
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate = new RestTemplateBuilder()
+            .connectTimeout(Duration.ofSeconds(5))
+            .readTimeout(Duration.ofSeconds(10))
+            .build();
 
     @Override
     public void sendMessage(Long chatId, String message) {
