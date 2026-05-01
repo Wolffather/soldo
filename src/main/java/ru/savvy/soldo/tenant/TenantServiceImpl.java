@@ -65,13 +65,19 @@ public class TenantServiceImpl implements TenantService {
         tenantRepository.save(tenant);
 
         // Update or create config
-        TenantConfig config = tenantConfigRepository.findById(tenantId)
-                .orElseGet(() -> TenantConfig.builder().tenantId(tenantId).build());
-
-        config.setEventLabel(request.getEventLabel());
-        config.setParticipantLabel(request.getParticipantLabel());
-        config.setBookingLabel(request.getBookingLabel());
-        tenantConfigRepository.save(config);
+        TenantConfig config = tenantConfigRepository.findById(tenantId).orElse(null);
+        if (config == null) {
+            config = TenantConfig.builder().tenantId(tenantId).build();
+            config.setEventLabel(request.getEventLabel());
+            config.setParticipantLabel(request.getParticipantLabel());
+            config.setBookingLabel(request.getBookingLabel());
+            tenantConfigRepository.save(config);
+        } else {
+            config.setEventLabel(request.getEventLabel());
+            config.setParticipantLabel(request.getParticipantLabel());
+            config.setBookingLabel(request.getBookingLabel());
+            // управляемая сущность — dirty checking сохранит изменения при коммите
+        }
 
         TenantSubscription sub = tenantSubscriptionRepository
                 .findFirstByTenantIdOrderByCreatedAtDesc(tenantId).orElse(null);
@@ -91,15 +97,20 @@ public class TenantServiceImpl implements TenantService {
                     "Неверный формат токена. Токен должен выглядеть как: 123456789:ABCdef...");
         }
 
-        TenantConfig config = tenantConfigRepository.findById(tenantId)
-                .orElseGet(() -> TenantConfig.builder().tenantId(tenantId).build());
-
-        config.setTelegramBotToken(request.getBotToken());
-        config.setTelegramBotUsername(null);
-        if (config.getTelegramWebhookSecret() == null) {
+        TenantConfig config = tenantConfigRepository.findById(tenantId).orElse(null);
+        if (config == null) {
+            config = TenantConfig.builder().tenantId(tenantId).build();
+            config.setTelegramBotToken(request.getBotToken());
             config.setTelegramWebhookSecret(generateWebhookSecret());
+            tenantConfigRepository.save(config);
+        } else {
+            config.setTelegramBotToken(request.getBotToken());
+            config.setTelegramBotUsername(null);
+            if (config.getTelegramWebhookSecret() == null) {
+                config.setTelegramWebhookSecret(generateWebhookSecret());
+            }
+            // управляемая сущность — dirty checking сохранит изменения при коммите
         }
-        tenantConfigRepository.save(config);
 
         TenantSubscription sub = tenantSubscriptionRepository
                 .findFirstByTenantIdOrderByCreatedAtDesc(tenantId).orElse(null);
@@ -117,7 +128,7 @@ public class TenantServiceImpl implements TenantService {
         if (config != null && config.getTelegramBotToken() != null) {
             config.setTelegramBotToken(null);
             config.setTelegramBotUsername(null);
-            tenantConfigRepository.save(config);
+            // управляемая сущность — dirty checking сохранит изменения при коммите
         }
 
         TenantSubscription sub = tenantSubscriptionRepository
