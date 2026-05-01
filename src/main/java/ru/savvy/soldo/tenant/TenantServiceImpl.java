@@ -66,11 +66,7 @@ public class TenantServiceImpl implements TenantService {
 
         // Update or create config
         TenantConfig config = tenantConfigRepository.findById(tenantId)
-                .orElseGet(() -> {
-                    TenantConfig c = new TenantConfig();
-                    c.setTenantId(tenantId);
-                    return c;
-                });
+                .orElseGet(() -> TenantConfig.builder().tenantId(tenantId).build());
 
         config.setEventLabel(request.getEventLabel());
         config.setParticipantLabel(request.getParticipantLabel());
@@ -96,11 +92,7 @@ public class TenantServiceImpl implements TenantService {
         }
 
         TenantConfig config = tenantConfigRepository.findById(tenantId)
-                .orElseGet(() -> {
-                    TenantConfig c = new TenantConfig();
-                    c.setTenantId(tenantId);
-                    return c;
-                });
+                .orElseGet(() -> TenantConfig.builder().tenantId(tenantId).build());
 
         config.setTelegramBotToken(request.getBotToken());
         config.setTelegramBotUsername(null);
