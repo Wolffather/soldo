@@ -1,8 +1,10 @@
 package ru.savvy.soldo.notification.service.impl;
 
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
@@ -13,7 +15,8 @@ import ru.savvy.soldo.tenant.TenantConfigRepository;
 import ru.savvy.soldo.tenant.TenantContext;
 import ru.savvy.soldo.tenant.model.TenantConfig;
 
-import java.time.Duration;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,10 +28,32 @@ public class TelegramSenderServiceImpl implements TelegramSenderService {
 
     private final TenantConfigRepository tenantConfigRepository;
 
-    private final RestTemplate restTemplate = new RestTemplateBuilder()
-            .connectTimeout(Duration.ofSeconds(5))
-            .readTimeout(Duration.ofSeconds(10))
-            .build();
+    @Value("${telegram.proxy.host:}")
+    private String proxyHost;
+
+    @Value("${telegram.proxy.port:1080}")
+    private int proxyPort;
+
+    @Value("${telegram.proxy.type:SOCKS5}")
+    private String proxyType;
+
+    private RestTemplate restTemplate;
+
+    @PostConstruct
+    void init() {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(5_000);
+        factory.setReadTimeout(10_000);
+
+        if (proxyHost != null && !proxyHost.isBlank()) {
+            Proxy.Type type = "HTTP".equalsIgnoreCase(proxyType) ? Proxy.Type.HTTP : Proxy.Type.SOCKS;
+            Proxy proxy = new Proxy(type, new InetSocketAddress(proxyHost, proxyPort));
+            factory.setProxy(proxy);
+            log.info("Telegram RestTemplate настроен с {} прокси {}:{}", proxyType, proxyHost, proxyPort);
+        }
+
+        restTemplate = new RestTemplate(factory);
+    }
 
     @Override
     public void sendMessage(Long chatId, String message) {
@@ -157,7 +182,8 @@ public class TelegramSenderServiceImpl implements TelegramSenderService {
             log.error("Не удалось подключиться к Telegram API: {}", e.getMessage());
             throw new IllegalOperationException(
                     "Сервер не может подключиться к Telegram API. "
-                            + "Проверьте сетевой доступ с вашего сервера до api.telegram.org.");
+                            + "Проверьте сетевой доступ с вашего сервера до api.telegram.org "
+                            + "или задайте переменную TELEGRAM_PROXY_HOST.");
         } catch (Exception e) {
             log.error("Непредвиденная ошибка при запросе getMe к Telegram: {}", e.getMessage());
         }

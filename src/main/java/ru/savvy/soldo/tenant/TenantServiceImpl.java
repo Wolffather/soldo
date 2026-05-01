@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.savvy.soldo.notification.service.TelegramSenderService;
 import ru.savvy.soldo.shared.exception.IllegalOperationException;
 import ru.savvy.soldo.shared.exception.NotFoundException;
 import ru.savvy.soldo.tenant.dto.TelegramBotSetupRequest;
@@ -26,7 +25,6 @@ public class TenantServiceImpl implements TenantService {
     private final TenantRepository tenantRepository;
     private final TenantConfigRepository tenantConfigRepository;
     private final TenantSubscriptionRepository tenantSubscriptionRepository;
-    private final TelegramSenderService telegramSender;
 
     @Value("${app.public-url:http://localhost:8080}")
     private String appPublicUrl;
@@ -92,6 +90,11 @@ public class TenantServiceImpl implements TenantService {
         Tenant tenant = tenantRepository.findById(tenantId)
                 .orElseThrow(() -> new NotFoundException("Тенант не найден"));
 
+        if (!request.getBotToken().matches("\\d+:[A-Za-z0-9_-]{35,}")) {
+            throw new IllegalOperationException(
+                    "Неверный формат токена. Токен должен выглядеть как: 123456789:ABCdef...");
+        }
+
         TenantConfig config = tenantConfigRepository.findById(tenantId)
                 .orElseGet(() -> {
                     TenantConfig c = new TenantConfig();
@@ -99,28 +102,12 @@ public class TenantServiceImpl implements TenantService {
                     return c;
                 });
 
-        // Проверяем токен через getMe и заодно получаем username бота
-        String username = telegramSender.fetchBotUsername(request.getBotToken());
-        if (username == null) {
-            throw new IllegalOperationException(
-                    "Не удалось проверить токен бота. Убедитесь, что токен корректный и бот активен.");
-        }
-
         config.setTelegramBotToken(request.getBotToken());
-        config.setTelegramBotUsername(username);
+        config.setTelegramBotUsername(null);
         if (config.getTelegramWebhookSecret() == null) {
             config.setTelegramWebhookSecret(generateWebhookSecret());
         }
         tenantConfigRepository.save(config);
-
-        // Регистрируем webhook
-        String webhookUrl = String.format("%s/public/bot/webhook/%s", appPublicUrl, tenant.getSlug());
-        boolean ok = telegramSender.registerWebhook(tenantId, webhookUrl);
-        if (!ok) {
-            throw new IllegalOperationException(
-                    "Токен сохранён, но не удалось зарегистрировать webhook у Telegram. "
-                            + "Проверьте, что приложение доступно по адресу " + appPublicUrl);
-        }
 
         TenantSubscription sub = tenantSubscriptionRepository
                 .findFirstByTenantIdOrderByCreatedAtDesc(tenantId).orElse(null);
@@ -136,7 +123,6 @@ public class TenantServiceImpl implements TenantService {
 
         TenantConfig config = tenantConfigRepository.findById(tenantId).orElse(null);
         if (config != null && config.getTelegramBotToken() != null) {
-            telegramSender.deleteWebhook(tenantId);
             config.setTelegramBotToken(null);
             config.setTelegramBotUsername(null);
             tenantConfigRepository.save(config);
@@ -182,6 +168,7 @@ public class TenantServiceImpl implements TenantService {
                         && config.getTelegramBotToken() != null
                         && !config.getTelegramBotToken().isBlank())
                 .telegramBotUsername(config != null ? config.getTelegramBotUsername() : null)
+                .telegramWebhookUrl(String.format("%s/public/bot/webhook/%s", appPublicUrl, tenant.getSlug()))
                 .build();
     }
 }

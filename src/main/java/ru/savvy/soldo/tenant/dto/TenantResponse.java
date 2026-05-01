@@ -32,4 +32,5 @@ public class TenantResponse {
     // Telegram Bot
     private boolean telegramBotEnabled;
     private String telegramBotUsername;
+    private String telegramWebhookUrl;
 }

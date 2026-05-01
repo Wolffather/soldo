@@ -44,6 +44,10 @@ telegram:
   bot:
     secret: ${TELEGRAM_BOT_SECRET:123}
     token: ${TELEGRAM_BOT_TOKEN:123}
+  proxy:
+    host: ${TELEGRAM_PROXY_HOST:}
+    port: ${TELEGRAM_PROXY_PORT:1080}
+    type: ${TELEGRAM_PROXY_TYPE:SOCKS5}  # SOCKS5 или HTTP
 
 vk:
   client:
