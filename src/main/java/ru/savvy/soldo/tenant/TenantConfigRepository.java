@@ -9,14 +9,17 @@ import ru.savvy.soldo.tenant.model.TenantConfig;
 public interface TenantConfigRepository extends JpaRepository<TenantConfig, Long> {
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("UPDATE TenantConfig c SET c.telegramBotToken = :token, c.telegramBotUsername = null, " +
-           "c.telegramWebhookSecret = CASE WHEN c.telegramWebhookSecret IS NULL THEN :secret ELSE c.telegramWebhookSecret END " +
-           "WHERE c.tenantId = :tenantId")
+    @Query(value = "UPDATE tenant_configs SET telegram_bot_token = :token, telegram_bot_username = NULL, " +
+                   "telegram_webhook_secret = COALESCE(telegram_webhook_secret, :secret) " +
+                   "WHERE tenant_id = :tenantId",
+           nativeQuery = true)
     void updateTelegramBot(@Param("tenantId") Long tenantId,
                            @Param("token") String token,
                            @Param("secret") String secret);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("UPDATE TenantConfig c SET c.telegramBotToken = null, c.telegramBotUsername = null WHERE c.tenantId = :tenantId")
+    @Query(value = "UPDATE tenant_configs SET telegram_bot_token = NULL, telegram_bot_username = NULL " +
+                   "WHERE tenant_id = :tenantId",
+           nativeQuery = true)
     void clearTelegramBot(@Param("tenantId") Long tenantId);
 }
