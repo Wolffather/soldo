@@ -4,8 +4,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 import ru.savvy.soldo.notification.service.TelegramSenderService;
+import ru.savvy.soldo.shared.exception.IllegalOperationException;
 import ru.savvy.soldo.tenant.TenantConfigRepository;
 import ru.savvy.soldo.tenant.TenantContext;
 import ru.savvy.soldo.tenant.model.TenantConfig;
@@ -145,8 +148,18 @@ public class TelegramSenderServiceImpl implements TelegramSenderService {
                 Object username = map.get("username");
                 return username != null ? username.toString() : null;
             }
+        } catch (HttpClientErrorException e) {
+            log.warn("Telegram API отклонил токен ({}): {}", e.getStatusCode(), e.getMessage());
+            throw new IllegalOperationException(
+                    "Токен бота недействителен (Telegram вернул " + e.getStatusCode() + "). "
+                            + "Убедитесь, что токен скопирован корректно из @BotFather.");
+        } catch (ResourceAccessException e) {
+            log.error("Не удалось подключиться к Telegram API: {}", e.getMessage());
+            throw new IllegalOperationException(
+                    "Сервер не может подключиться к Telegram API. "
+                            + "Проверьте сетевой доступ с вашего сервера до api.telegram.org.");
         } catch (Exception e) {
-            log.error("Ошибка запроса getMe к Telegram: {}", e.getMessage());
+            log.error("Непредвиденная ошибка при запросе getMe к Telegram: {}", e.getMessage());
         }
         return null;
     }
