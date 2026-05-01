@@ -9,20 +9,15 @@ import ru.savvy.soldo.booking.model.Booking;
 import ru.savvy.soldo.event.model.Event;
 import ru.savvy.soldo.notification.model.Notification;
 import ru.savvy.soldo.user.model.User;
-import ru.savvy.soldo.user.model.UserAuthProvider;
-import ru.savvy.soldo.user.model.AuthProviderType;
 import ru.savvy.soldo.notification.model.NotificationType;
 import ru.savvy.soldo.booking.repository.BookingRepository;
 import ru.savvy.soldo.event.repository.EventRepository;
 import ru.savvy.soldo.notification.repository.NotificationRepository;
-import ru.savvy.soldo.user.repository.UserAuthProviderRepository;
 import ru.savvy.soldo.user.repository.UserRepository;
 import ru.savvy.soldo.notification.service.NotificationService;
-import ru.savvy.soldo.notification.service.TelegramSenderService;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Service
@@ -33,22 +28,6 @@ public class NotificationServiceImpl implements NotificationService {
     private final UserRepository userRepository;
     private final EventRepository eventRepository;
     private final BookingRepository bookingRepository;
-    private final UserAuthProviderRepository authProviderRepository;
-    private final TelegramSenderService telegramSender;
-
-    /** Returns the Telegram chat ID for a user (via user_auth_providers), or null if none. */
-    private Long getTelegramChatId(User user) {
-        if (user == null) return null;
-        return authProviderRepository.findByUserId(user.getId()).stream()
-                .filter(p -> p.getProvider() == AuthProviderType.TELEGRAM)
-                .map(UserAuthProvider::getProviderUserId)
-                .map(id -> {
-                    try { return Long.parseLong(id); } catch (NumberFormatException e) { return null; }
-                })
-                .filter(java.util.Objects::nonNull)
-                .findFirst()
-                .orElse(null);
-    }
 
     @Override
     @Transactional
@@ -67,20 +46,6 @@ public class NotificationServiceImpl implements NotificationService {
                 .build();
 
         notificationRepository.save(notification);
-
-        // Отправляем в Telegram (если у пользователя привязан Telegram через провайдер)
-        Long telegramId = getTelegramChatId(user);
-        if (telegramId != null && user != null) {
-            try {
-                telegramSender.sendMessage(user.getTenantId(), telegramId, message);
-                notification.setSent(true);
-                notification.setSentAt(LocalDateTime.now());
-                notificationRepository.save(notification);
-            } catch (Exception e) {
-                log.error("Ошибка отправки уведомления пользователю {}: {}",
-                          userId, e.getMessage());
-            }
-        }
     }
 
     @Override
@@ -106,25 +71,7 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     @Transactional
     public void processScheduled() {
-        List<Notification> pending = notificationRepository.findPendingScheduled(LocalDateTime.now());
-
-        for (Notification notification : pending) {
-            User user = notification.getUser();
-            Long telegramId = getTelegramChatId(user);
-            if (telegramId != null && user != null) {
-                try {
-                    telegramSender.sendMessage(user.getTenantId(), telegramId, notification.getMessage());
-                    notification.setSent(true);
-                    notification.setSentAt(LocalDateTime.now());
-                    notificationRepository.save(notification);
-                    log.info("Отправлено уведомление {} пользователю {}",
-                             notification.getType(), user.getId());
-                } catch (Exception e) {
-                    log.error("Ошибка отправки уведомления {}: {}",
-                              notification.getId(), e.getMessage());
-                }
-            }
-        }
+        // Scheduled notifications are stored for record-keeping; delivery channels TBD
     }
 
     @Override

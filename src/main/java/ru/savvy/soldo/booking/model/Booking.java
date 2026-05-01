@@ -69,10 +69,6 @@ public class Booking {
     @Builder.Default
     private boolean hasCertificate = false;
 
-    /** Telegram chat ID — заполняется при бронировании через Telegram-бота. */
-    @Column(name = "telegram_chat_id")
-    private Long telegramChatId;
-
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

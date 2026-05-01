@@ -22,7 +22,6 @@ import ru.savvy.soldo.booking.repository.EventBookingSummaryRepository;
 import ru.savvy.soldo.event.repository.EventRepository;
 import ru.savvy.soldo.booking.service.BookingDocumentService;
 import ru.savvy.soldo.booking.service.BookingService;
-import ru.savvy.soldo.notification.service.TelegramSenderService;
 import ru.savvy.soldo.booking.service.PaymentService;
 
 import java.math.BigDecimal;
@@ -37,7 +36,6 @@ public class BookingServiceImpl implements BookingService {
     private final BookingRepository bookingRepository;
     private final EventRepository eventRepository;
     private final EventBookingSummaryRepository summaryRepository;
-    private final TelegramSenderService telegramSender;
     private final PaymentService paymentService;
     private final BookingDocumentService bookingDocumentService;
     private final BookingDocumentRepository bookingDocumentRepository;
@@ -179,21 +177,8 @@ public class BookingServiceImpl implements BookingService {
         return paymentService.getMonthlyRevenue();
     }
 
-    /**
-     * Отправляет уведомление гостю бронирования.
-     * Если у бронирования привязан telegram_chat_id — отправляем через Telegram.
-     * В остальных случаях уведомление молча пропускается (для email/sms —
-     * отдельный канал доставки, сейчас не реализован).
-     */
     private void notifyBooker(Booking booking, String message) {
-        if (booking.getTelegramChatId() != null) {
-            try {
-                telegramSender.sendMessage(booking.getTenantId(), booking.getTelegramChatId(), message);
-            } catch (Exception e) {
-                log.warn("Не удалось отправить Telegram-уведомление для бронирования {}: {}",
-                        booking.getId(), e.getMessage());
-            }
-        }
+        // Notification channel (email/sms) to be implemented
     }
 
     private BookingResponse toResponse(Booking b) {

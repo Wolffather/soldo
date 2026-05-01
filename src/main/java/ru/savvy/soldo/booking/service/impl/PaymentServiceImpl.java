@@ -9,7 +9,6 @@ import ru.savvy.soldo.shared.exception.EntityFinder;
 import ru.savvy.soldo.booking.model.Booking;
 import ru.savvy.soldo.booking.model.PaymentStatus;
 import ru.savvy.soldo.booking.repository.BookingRepository;
-import ru.savvy.soldo.notification.service.TelegramSenderService;
 import ru.savvy.soldo.booking.service.PaymentService;
 
 import java.math.BigDecimal;
@@ -22,7 +21,6 @@ import java.time.YearMonth;
 public class PaymentServiceImpl implements PaymentService {
 
     private final BookingRepository bookingRepository;
-    private final TelegramSenderService telegramSender;
 
     @Override
     @Transactional
@@ -40,20 +38,6 @@ public class PaymentServiceImpl implements PaymentService {
         if (newStatus == PaymentStatus.PAID) {
             booking.setPaymentDate(LocalDateTime.now());
             booking.setAmountPaid(booking.getAmountDue());
-
-            // Telegram-уведомление только если у бронирования есть привязанный чат
-            if (booking.getTelegramChatId() != null) {
-                try {
-                    telegramSender.sendMessage(
-                            booking.getTenantId(),
-                            booking.getTelegramChatId(),
-                            String.format("💰 Оплата за <b>%s</b> получена. Спасибо!",
-                                    booking.getEvent().getTitle()));
-                } catch (Exception e) {
-                    log.warn("Не удалось отправить Telegram-уведомление об оплате для бронирования {}: {}",
-                            booking.getId(), e.getMessage());
-                }
-            }
         }
 
         return bookingRepository.save(booking);

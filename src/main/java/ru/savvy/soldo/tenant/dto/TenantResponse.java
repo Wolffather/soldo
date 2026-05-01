@@ -28,9 +28,4 @@ public class TenantResponse {
     private String eventLabel;
     private String participantLabel;
     private String bookingLabel;
-
-    // Telegram Bot
-    private boolean telegramBotEnabled;
-    private String telegramBotUsername;
-    private String telegramWebhookUrl;
 }

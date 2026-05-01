@@ -40,24 +40,6 @@ jwt:
   secret: ${JWT_SECRET:dev-secret-change-me-in-production-at-least-32-bytes!!}
   expiration-ms: ${JWT_EXPIRATION_MS:86400000}
 
-telegram:
-  bot:
-    secret: ${TELEGRAM_BOT_SECRET:123}
-    token: ${TELEGRAM_BOT_TOKEN:123}
-  proxy:
-    host: ${TELEGRAM_PROXY_HOST:}
-    port: ${TELEGRAM_PROXY_PORT:1080}
-    type: ${TELEGRAM_PROXY_TYPE:SOCKS5}  # SOCKS5 или HTTP
-
-vk:
-  client:
-    id: ${VK_CLIENT_ID:}
-    secret: ${VK_CLIENT_SECRET:}
-
-yandex:
-  client:
-    id: ${YANDEX_CLIENT_ID:}
-    secret: ${YANDEX_CLIENT_SECRET:}
 
 server:
   port: ${SERVER_PORT:8080}
@@ -84,6 +66,4 @@ swagger:
 
 app:
   upload-dir: ${UPLOAD_DIR:./uploads}
-  # Базовый публичный URL приложения — используется для построения webhook URL
-  # при регистрации Telegram-ботов тенантов.
   public-url: ${APP_PUBLIC_URL:http://localhost:8080}

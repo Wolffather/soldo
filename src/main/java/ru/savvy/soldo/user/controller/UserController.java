@@ -25,22 +25,12 @@ public class UserController {
                 mapper.entitiesToResponses(service.getAllUsers()));
     }
 
-    @GetMapping("/{telegramId}")
-    public ResponseEntity<UserResponse> findUser(
-            @PathVariable Long telegramId) {
+    @GetMapping("/{id}")
+    public ResponseEntity<UserResponse> findUser(@PathVariable Long id) {
         return ResponseEntity.ok(
-                mapper.entityToResponse(service.findByTelegramId(telegramId)));
+                mapper.entityToResponse(service.findById(id)));
     }
 
-    /** Выдать роль ADMIN по Telegram ID (устарело — использовать /{id}/role). */
-    @PatchMapping("/grant-admin-role/{telegramId}")
-    public ResponseEntity<UserResponse> grantAdminRole(
-            @PathVariable Long telegramId) {
-        return ResponseEntity.ok(
-                mapper.entityToResponse(service.grantAdminRole(telegramId)));
-    }
-
-    /** Выдать роль ADMIN по внутреннему ID пользователя. */
     @PatchMapping("/{id}/role")
     public ResponseEntity<UserResponse> grantAdminRoleById(@PathVariable Long id) {
         return ResponseEntity.ok(

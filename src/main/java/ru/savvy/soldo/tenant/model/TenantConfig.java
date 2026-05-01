@@ -53,17 +53,5 @@ public class TenantConfig {
     @Builder.Default
     private String branding = "{}";
 
-    // ─── Telegram Bot ──────────────────────────────────────────────────────
-    /** Токен бота, полученный от @BotFather. Если null — бот не подключён. */
-    @Column(name = "telegram_bot_token")
-    private String telegramBotToken;
-
-    /** Username бота (без @) — используется для формирования ссылки t.me/{username}. */
-    @Column(name = "telegram_bot_username")
-    private String telegramBotUsername;
-
-    /** Секрет для проверки подлинности webhook-запросов от Telegram. */
-    @Column(name = "telegram_webhook_secret")
-    private String telegramWebhookSecret;
 }
 
