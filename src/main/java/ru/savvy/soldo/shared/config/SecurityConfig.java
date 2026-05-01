@@ -36,7 +36,7 @@ public class SecurityConfig {
     @Value("${swagger.password}")
     private String swaggerPassword;
 
-    @Value("${app.cors.allowed-origins}")
+    @Value("${cors.allowed-origins}")
     private List<String> allowedOrigins;
 
 
