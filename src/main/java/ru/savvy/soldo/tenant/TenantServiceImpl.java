@@ -97,21 +97,9 @@ public class TenantServiceImpl implements TenantService {
                     "Неверный формат токена. Токен должен выглядеть как: 123456789:ABCdef...");
         }
 
-        TenantConfig config = tenantConfigRepository.findById(tenantId).orElse(null);
-        if (config == null) {
-            config = TenantConfig.builder().tenantId(tenantId).build();
-            config.setTelegramBotToken(request.getBotToken());
-            config.setTelegramWebhookSecret(generateWebhookSecret());
-            tenantConfigRepository.save(config);
-        } else {
-            config.setTelegramBotToken(request.getBotToken());
-            config.setTelegramBotUsername(null);
-            if (config.getTelegramWebhookSecret() == null) {
-                config.setTelegramWebhookSecret(generateWebhookSecret());
-            }
-            // управляемая сущность — dirty checking сохранит изменения при коммите
-        }
+        tenantConfigRepository.updateTelegramBot(tenantId, request.getBotToken(), generateWebhookSecret());
 
+        TenantConfig config = tenantConfigRepository.findById(tenantId).orElse(null);
         TenantSubscription sub = tenantSubscriptionRepository
                 .findFirstByTenantIdOrderByCreatedAtDesc(tenantId).orElse(null);
         return toResponse(tenant, config, sub);
@@ -124,13 +112,9 @@ public class TenantServiceImpl implements TenantService {
         Tenant tenant = tenantRepository.findById(tenantId)
                 .orElseThrow(() -> new NotFoundException("Тенант не найден"));
 
-        TenantConfig config = tenantConfigRepository.findById(tenantId).orElse(null);
-        if (config != null && config.getTelegramBotToken() != null) {
-            config.setTelegramBotToken(null);
-            config.setTelegramBotUsername(null);
-            // управляемая сущность — dirty checking сохранит изменения при коммите
-        }
+        tenantConfigRepository.clearTelegramBot(tenantId);
 
+        TenantConfig config = tenantConfigRepository.findById(tenantId).orElse(null);
         TenantSubscription sub = tenantSubscriptionRepository
                 .findFirstByTenantIdOrderByCreatedAtDesc(tenantId).orElse(null);
         return toResponse(tenant, config, sub);
