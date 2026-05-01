@@ -28,17 +28,44 @@
 | `content` | Управление контентом (сайт, команда, галерея) |
 | `onboarding` | Онбординг новых тенантов |
 
+## Конфигурация
+
+Вся конфигурация через переменные окружения. Файл `application.yaml` содержит дефолты для локальной разработки — для запуска на `localhost` достаточно поднять PostgreSQL с дефолтными кредами.
+
+| Переменная | По умолчанию | Описание |
+|-----------|-------------|----------|
+| `DB_URL` | `jdbc:postgresql://localhost:5432/soldo_db` | JDBC URL базы данных |
+| `DB_USERNAME` | `app_user` | Пользователь БД |
+| `DB_PASSWORD` | `app_pass` | Пароль БД |
+| `JWT_SECRET` | dev-заглушка | Секрет для подписи JWT (в проде — длинная случайная строка) |
+| `JWT_EXPIRATION_MS` | `86400000` (24ч) | Время жизни JWT |
+| `APP_PUBLIC_URL` | `http://localhost:8080` | Публичный URL (для Telegram webhook) |
+| `UPLOAD_DIR` | `./uploads` | Директория загрузок |
+| `SWAGGER_ENABLED` | `true` | Включить Swagger UI |
+| `SWAGGER_USERNAME` | `admin` | Basic-auth для Swagger |
+| `SWAGGER_PASSWORD` | `admin` | Basic-auth для Swagger |
+| `VK_CLIENT_ID` | — | OAuth: VK App ID |
+| `VK_CLIENT_SECRET` | — | OAuth: VK Secret |
+| `YANDEX_CLIENT_ID` | — | OAuth: Яндекс Client ID |
+| `YANDEX_CLIENT_SECRET` | — | OAuth: Яндекс Secret |
+| `TELEGRAM_BOT_TOKEN` | `123` | Fallback Telegram-токен |
+| `TELEGRAM_BOT_SECRET` | `123` | Fallback Telegram-секрет |
+| `LOG_LEVEL_APP` | `DEBUG` | Уровень логирования приложения |
+| `LOG_LEVEL_SQL` | `DEBUG` | Уровень логирования SQL |
+
 ## Быстрый старт (dev)
 
 ```bash
 # 1. Поднять PostgreSQL
 docker compose up -d
 
-# 2. Запустить приложение
-cp src/main/resources/application-local.yml.example src/main/resources/application-local.yml
-# Отредактировать application-local.yml под свои нужды
+# 2. Запустить приложение (дефолтов достаточно для localhost)
+./mvnw spring-boot:run
+```
 
-./mvnw spring-boot:run -Dspring-boot.run.profiles=local
+Если нужны нестандартные значения — передайте через env:
+```bash
+DB_URL=jdbc:postgresql://myhost:5432/mydb DB_USERNAME=me DB_PASSWORD=secret ./mvnw spring-boot:run
 ```
 
 API будет доступно на `http://localhost:8080`.  
