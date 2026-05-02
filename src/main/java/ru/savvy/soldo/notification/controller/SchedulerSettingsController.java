@@ -10,7 +10,7 @@ import ru.savvy.soldo.notification.settings.SchedulerSettingsService;
 
 @RestController
 @RequestMapping("/admin/scheduler-settings")
-@PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+@PreAuthorize("hasRole('ADMIN')")
 @RequiredArgsConstructor
 public class SchedulerSettingsController {
 

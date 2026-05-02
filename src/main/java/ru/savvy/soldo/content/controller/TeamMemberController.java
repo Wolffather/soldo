@@ -23,14 +23,14 @@ public class TeamMemberController {
     }
 
     /** Admin: создать участника */
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/team")
     public ResponseEntity<TeamMemberDTO> create(@Valid @RequestBody TeamMemberDTO dto) {
         return ResponseEntity.ok(teamMemberService.create(dto));
     }
 
     /** Admin: обновить участника */
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/team/{id}")
     public ResponseEntity<TeamMemberDTO> update(
             @PathVariable Long id,
@@ -39,7 +39,7 @@ public class TeamMemberController {
     }
 
     /** Admin: удалить участника */
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/team/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         teamMemberService.delete(id);

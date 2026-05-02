@@ -17,7 +17,7 @@ public class TenantController {
     private final TenantService tenantService;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<TenantResponse> getCurrent(Authentication auth) {
         Long userId = Long.parseLong(auth.getName());
         return ResponseEntity.ok(tenantService.getCurrentTenant(userId));

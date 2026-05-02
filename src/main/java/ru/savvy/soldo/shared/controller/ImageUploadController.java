@@ -21,7 +21,7 @@ public class ImageUploadController {
 
     private final FileStorageService fileStorageService;
 
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Map<String, String>> upload(@RequestParam("file") MultipartFile file) {
         String url = fileStorageService.store(file);

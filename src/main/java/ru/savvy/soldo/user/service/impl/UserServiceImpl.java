@@ -7,7 +7,6 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.savvy.soldo.user.dto.UserRegisterRequest;
 import ru.savvy.soldo.user.model.UserRole;
 import ru.savvy.soldo.shared.exception.NotFoundException;
-import ru.savvy.soldo.shared.exception.RoleAlreadyExistsException;
 import ru.savvy.soldo.user.model.User;
 import ru.savvy.soldo.user.repository.UserRepository;
 import ru.savvy.soldo.tenant.TenantContext;
@@ -43,18 +42,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public User grantAdminRoleById(Long id) {
-        User user = findById(id);
-        if (user.hasRole(UserRole.ADMIN)) {
-            throw new RoleAlreadyExistsException(
-                    "Уже выданы права админа пользователю с id=" + id);
-        }
-        user.setRole(UserRole.ADMIN.name());
-        return repository.save(user);
-    }
-
-    @Override
-    @Transactional
     public User registerUser(UserRegisterRequest request) {
         Long tenantId = TenantContext.getCurrentTenantId() != null
                 ? TenantContext.getCurrentTenantId() : 1L;
@@ -65,7 +52,7 @@ public class UserServiceImpl implements UserService {
                 .lastName(request.getLastName())
                 .email(request.getEmail())
                 .phone(request.getPhone())
-                .role(UserRole.USER.name())
+                .role(UserRole.ADMIN.name())
                 .tenantId(tenantId)
                 .build();
         return repository.save(user);

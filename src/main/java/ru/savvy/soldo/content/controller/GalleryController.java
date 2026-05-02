@@ -26,7 +26,7 @@ public class GalleryController {
     }
 
     /** Admin: загрузить фото в галерею */
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping(value = "/gallery", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<GalleryItemDTO> upload(
             @RequestParam("file") MultipartFile file,
@@ -37,7 +37,7 @@ public class GalleryController {
     }
 
     /** Admin: удалить фото из галереи */
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/gallery/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         galleryService.delete(id);

@@ -9,7 +9,6 @@ import java.util.Optional;
 public interface UserService {
     User findById(Long id);
     List<User> getAllUsers();
-    User grantAdminRoleById(Long id);
     Optional<User> findByUsername(String username);
     User registerUser(UserRegisterRequest request);
 }

@@ -21,7 +21,7 @@ public class SiteSettingsController {
     }
 
     /** Admin: сохранить/обновить настройку */
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/site-settings/{key:.+}")
     public ResponseEntity<Void> upsert(
             @PathVariable String key,
@@ -31,7 +31,7 @@ public class SiteSettingsController {
     }
 
     /** Admin: удалить настройку */
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MODERATOR')")
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/site-settings/{key:.+}")
     public ResponseEntity<Void> delete(@PathVariable String key) {
         siteSettingsService.delete(key);

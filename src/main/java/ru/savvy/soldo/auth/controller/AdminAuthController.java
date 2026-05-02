@@ -29,7 +29,7 @@ public class AdminAuthController {
             return ResponseEntity.status(401).build();
         }
 
-        if (!"ADMIN".equals(user.getRole()) && !"MODERATOR".equals(user.getRole())) {
+        if (!"ADMIN".equals(user.getRole())) {
             return ResponseEntity.status(403).build();
         }
 

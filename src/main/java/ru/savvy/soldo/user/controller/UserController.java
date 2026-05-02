@@ -30,10 +30,4 @@ public class UserController {
         return ResponseEntity.ok(
                 mapper.entityToResponse(service.findById(id)));
     }
-
-    @PatchMapping("/{id}/role")
-    public ResponseEntity<UserResponse> grantAdminRoleById(@PathVariable Long id) {
-        return ResponseEntity.ok(
-                mapper.entityToResponse(service.grantAdminRoleById(id)));
-    }
 }

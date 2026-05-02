@@ -43,20 +43,20 @@ public class EventCategoryController {
         return ResponseEntity.ok(categoryService.getByFormat(format));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<EventCategoryDTO> create(@Valid @RequestBody EventCategoryDTO dto) {
         return ResponseEntity.ok(categoryService.create(dto));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<EventCategoryDTO> update(
             @PathVariable Long id, @Valid @RequestBody EventCategoryDTO dto) {
         return ResponseEntity.ok(categoryService.update(id, dto));
     }
 
-    @PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         categoryService.delete(id);

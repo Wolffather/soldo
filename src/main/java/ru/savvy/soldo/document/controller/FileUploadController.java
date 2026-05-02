@@ -15,7 +15,7 @@ import java.util.Set;
 @Slf4j
 @RestController
 @RequestMapping("/admin/upload")
-@PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
+@PreAuthorize("hasRole('ADMIN')")
 @RequiredArgsConstructor
 public class FileUploadController {
 
