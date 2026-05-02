@@ -13,12 +13,9 @@ import ru.savvy.soldo.shared.exception.DataDuplicationException;
 import ru.savvy.soldo.shared.security.JwtTokenProvider;
 import ru.savvy.soldo.tenant.TenantConfigRepository;
 import ru.savvy.soldo.tenant.TenantRepository;
-import ru.savvy.soldo.tenant.TenantSubscriptionRepository;
-import ru.savvy.soldo.tenant.model.PlanType;
 import ru.savvy.soldo.tenant.model.Tenant;
 import ru.savvy.soldo.tenant.model.TenantConfig;
 import ru.savvy.soldo.tenant.model.TenantStatus;
-import ru.savvy.soldo.tenant.model.TenantSubscription;
 import ru.savvy.soldo.user.model.User;
 import ru.savvy.soldo.user.repository.UserRepository;
 import ru.savvy.soldo.widget.WidgetConfigRepository;
@@ -30,7 +27,6 @@ public class OnboardingServiceImpl implements OnboardingService {
 
     private final TenantRepository tenantRepository;
     private final TenantConfigRepository tenantConfigRepository;
-    private final TenantSubscriptionRepository tenantSubscriptionRepository;
     private final WidgetConfigRepository widgetConfigRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -67,19 +63,7 @@ public class OnboardingServiceImpl implements OnboardingService {
         tenantConfig.setTenant(tenant);
         tenantConfigRepository.save(tenantConfig);
 
-        // 3. Create TenantSubscription
-        TenantSubscription subscription = TenantSubscription.builder()
-                .tenant(tenant)
-                .plan(PlanType.FREE)
-                .maxEvents(10)
-                .maxBookingsPerMonth(50)
-                .maxAdminUsers(1)
-                .customDomainEnabled(false)
-                .apiAccessEnabled(false)
-                .build();
-        tenantSubscriptionRepository.save(subscription);
-
-        // 4. Create WidgetConfig with defaults
+        // 3. Create WidgetConfig with defaults
         WidgetConfig widgetConfig = WidgetConfig.builder().build();
         widgetConfig.setTenant(tenant);
         widgetConfigRepository.save(widgetConfig);

@@ -74,42 +74,6 @@
         </createTable>
     </changeSet>
 
-    <changeSet id="init-003-tenant-subscriptions" author="savvy">
-        <createTable tableName="tenant_subscriptions">
-            <column name="id" type="BIGINT" autoIncrement="true">
-                <constraints primaryKey="true" nullable="false"/>
-            </column>
-            <column name="tenant_id" type="BIGINT">
-                <constraints nullable="false"
-                             foreignKeyName="fk_tenant_subscription_tenant"
-                             referencedTableName="tenants"
-                             referencedColumnNames="id"/>
-            </column>
-            <column name="plan" type="VARCHAR(50)" defaultValue="FREE">
-                <constraints nullable="false"/>
-            </column>
-            <column name="max_events" type="INTEGER"/>
-            <column name="max_bookings_per_month" type="INTEGER"/>
-            <column name="max_admin_users" type="INTEGER" defaultValueNumeric="1">
-                <constraints nullable="false"/>
-            </column>
-            <column name="custom_domain_enabled" type="BOOLEAN" defaultValueBoolean="false">
-                <constraints nullable="false"/>
-            </column>
-            <column name="api_access_enabled" type="BOOLEAN" defaultValueBoolean="false">
-                <constraints nullable="false"/>
-            </column>
-            <column name="period_start" type="TIMESTAMPTZ"/>
-            <column name="period_end" type="TIMESTAMPTZ"/>
-            <column name="created_at" type="TIMESTAMPTZ" defaultValueComputed="NOW()">
-                <constraints nullable="false"/>
-            </column>
-        </createTable>
-        <createIndex tableName="tenant_subscriptions" indexName="idx_tenant_subscriptions_tenant_id">
-            <column name="tenant_id"/>
-        </createIndex>
-    </changeSet>
-
     <!-- ═══════════════════════════════════════════════════════════════════
          ПОЛЬЗОВАТЕЛИ
          ═══════════════════════════════════════════════════════════════════ -->

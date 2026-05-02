@@ -8,7 +8,6 @@ import ru.savvy.soldo.tenant.dto.TenantConfigUpdateRequest;
 import ru.savvy.soldo.tenant.dto.TenantResponse;
 import ru.savvy.soldo.tenant.model.Tenant;
 import ru.savvy.soldo.tenant.model.TenantConfig;
-import ru.savvy.soldo.tenant.model.TenantSubscription;
 import ru.savvy.soldo.user.repository.UserRepository;
 
 @Service
@@ -18,7 +17,6 @@ public class TenantServiceImpl implements TenantService {
     private final UserRepository userRepository;
     private final TenantRepository tenantRepository;
     private final TenantConfigRepository tenantConfigRepository;
-    private final TenantSubscriptionRepository tenantSubscriptionRepository;
 
     @Override
     public TenantResponse getCurrentTenant(Long userId) {
@@ -30,10 +28,8 @@ public class TenantServiceImpl implements TenantService {
                 .orElseThrow(() -> new NotFoundException("Тенант не найден"));
 
         TenantConfig config = tenantConfigRepository.findById(tenantId).orElse(null);
-        TenantSubscription sub = tenantSubscriptionRepository
-                .findFirstByTenantIdOrderByCreatedAtDesc(tenantId).orElse(null);
 
-        return toResponse(tenant, config, sub);
+        return toResponse(tenant, config);
     }
 
     @Override
@@ -65,10 +61,7 @@ public class TenantServiceImpl implements TenantService {
             config.setBookingLabel(request.getBookingLabel());
         }
 
-        TenantSubscription sub = tenantSubscriptionRepository
-                .findFirstByTenantIdOrderByCreatedAtDesc(tenantId).orElse(null);
-
-        return toResponse(tenant, config, sub);
+        return toResponse(tenant, config);
     }
 
     private Long resolveTenantId(Long userId) {
@@ -77,19 +70,13 @@ public class TenantServiceImpl implements TenantService {
                 .getTenantId();
     }
 
-    private TenantResponse toResponse(Tenant tenant, TenantConfig config, TenantSubscription sub) {
+    private TenantResponse toResponse(Tenant tenant, TenantConfig config) {
         return TenantResponse.builder()
                 .id(tenant.getId())
                 .slug(tenant.getSlug())
                 .name(tenant.getName())
                 .domain(tenant.getDomain())
                 .status(tenant.getStatus() != null ? tenant.getStatus().name() : null)
-                .plan(sub != null && sub.getPlan() != null ? sub.getPlan().name() : "FREE")
-                .maxEvents(sub != null ? sub.getMaxEvents() : null)
-                .maxBookingsPerMonth(sub != null ? sub.getMaxBookingsPerMonth() : null)
-                .maxAdminUsers(sub != null ? sub.getMaxAdminUsers() : 1)
-                .customDomainEnabled(sub != null && sub.isCustomDomainEnabled())
-                .apiAccessEnabled(sub != null && sub.isApiAccessEnabled())
                 .eventLabel(config != null ? config.getEventLabel() : "Событие")
                 .participantLabel(config != null ? config.getParticipantLabel() : "Участник")
                 .bookingLabel(config != null ? config.getBookingLabel() : "Бронирование")

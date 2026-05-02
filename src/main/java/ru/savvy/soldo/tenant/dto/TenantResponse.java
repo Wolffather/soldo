@@ -16,14 +16,6 @@ public class TenantResponse {
     private String domain;
     private String status;
 
-    // Subscription
-    private String plan;
-    private Integer maxEvents;
-    private Integer maxBookingsPerMonth;
-    private Integer maxAdminUsers;
-    private boolean customDomainEnabled;
-    private boolean apiAccessEnabled;
-
     // Config labels
     private String eventLabel;
     private String participantLabel;
