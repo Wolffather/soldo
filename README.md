@@ -15,13 +15,12 @@
 
 | Пакет | Описание |
 |-------|----------|
-| `auth` | Аутентификация (JWT, OAuth — VK, Яндекс) |
+| `auth` | Аутентификация — JWT, логин/пароль, регистрация |
 | `tenant` | Мультитенантность, конфигурация, подписки |
 | `user` | Управление пользователями и профилями участников |
 | `event` | События, категории, форматы |
 | `booking` | Бронирования, статусы, сводка (counter-кэш) |
 | `document` | Шаблоны документов, электронная подпись |
-| `bot` | Интеграция с Telegram (webhook per tenant) |
 | `notification` | Уведомления с планировщиком |
 | `inquiry` | Обратная связь / заявки |
 | `widget` | Встраиваемый виджет бронирования |
@@ -39,17 +38,11 @@
 | `DB_PASSWORD` | `app_pass` | Пароль БД |
 | `JWT_SECRET` | dev-заглушка | Секрет для подписи JWT (в проде — длинная случайная строка) |
 | `JWT_EXPIRATION_MS` | `86400000` (24ч) | Время жизни JWT |
-| `APP_PUBLIC_URL` | `http://localhost:8080` | Публичный URL (для Telegram webhook) |
+| `APP_PUBLIC_URL` | `http://localhost:8080` | Публичный URL приложения |
 | `UPLOAD_DIR` | `./uploads` | Директория загрузок |
 | `SWAGGER_ENABLED` | `true` | Включить Swagger UI |
 | `SWAGGER_USERNAME` | `admin` | Basic-auth для Swagger |
 | `SWAGGER_PASSWORD` | `admin` | Basic-auth для Swagger |
-| `VK_CLIENT_ID` | — | OAuth: VK App ID |
-| `VK_CLIENT_SECRET` | — | OAuth: VK Secret |
-| `YANDEX_CLIENT_ID` | — | OAuth: Яндекс Client ID |
-| `YANDEX_CLIENT_SECRET` | — | OAuth: Яндекс Secret |
-| `TELEGRAM_BOT_TOKEN` | `123` | Fallback Telegram-токен |
-| `TELEGRAM_BOT_SECRET` | `123` | Fallback Telegram-секрет |
 | `LOG_LEVEL_APP` | `DEBUG` | Уровень логирования приложения |
 | `LOG_LEVEL_SQL` | `DEBUG` | Уровень логирования SQL |
 
@@ -81,7 +74,7 @@ Swagger UI: `http://localhost:8080/swagger-ui/index.html`.
 db/changelog/
 ├── db.changelog-master.xml          # точка входа
 └── init/
-    ├── 001-init-schema.xml          # все таблицы (19 changesets)
+    ├── 001-init-schema.xml          # все таблицы
     └── 002-booking-summary-functions.sql  # PL/pgSQL функции счётчиков
 ```
 
@@ -109,14 +102,14 @@ docker compose -f docker-compose.prod.yml --env-file .env up -d --build
 | Путь | Описание |
 |------|----------|
 | `POST /auth/login` | Аутентификация, получение JWT |
-| `/api/events/**` | CRUD событий |
-| `/api/bookings/**` | CRUD бронирований |
-| `/api/users/**` | Управление пользователями |
-| `/api/tenant/**` | Настройки тенанта |
-| `/api/documents/**` | Шаблоны и документы |
-| `/api/notifications/**` | Уведомления |
+| `POST /auth/register` | Регистрация пользователя |
+| `/admin/events/**` | CRUD событий |
+| `/admin/bookings/**` | CRUD бронирований |
+| `/admin/users/**` | Управление пользователями |
+| `/admin/tenant/**` | Настройки тенанта |
+| `/admin/documents/**` | Шаблоны и документы |
+| `/admin/notifications/**` | Уведомления |
 | `/public/widget/**` | Публичный виджет (без авторизации) |
-| `/public/telegram/**` | Webhook Telegram-ботов |
 
 ## Структура проекта
 
@@ -124,7 +117,6 @@ docker compose -f docker-compose.prod.yml --env-file .env up -d --build
 src/main/java/ru/savvy/soldo/
 ├── auth/           # Контроллеры, DTO, модели аутентификации
 ├── booking/        # Бронирования, документы, сводка
-├── bot/            # Telegram-бот
 ├── content/        # Контент сайта
 ├── document/       # Документы и шаблоны
 ├── event/          # События и категории
