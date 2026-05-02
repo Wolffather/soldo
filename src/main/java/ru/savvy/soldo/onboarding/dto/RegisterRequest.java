@@ -11,11 +11,6 @@ public class RegisterRequest {
     private String orgName;
 
     @NotBlank
-    @Size(min = 2, max = 60)
-    @Pattern(regexp = "^[a-z0-9-]+$", message = "Только строчные латинские буквы, цифры и дефис")
-    private String slug;
-
-    @NotBlank
     @Size(min = 2, max = 100)
     private String adminName;
 

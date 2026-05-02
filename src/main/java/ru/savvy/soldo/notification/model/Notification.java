@@ -2,7 +2,6 @@ package ru.savvy.soldo.notification.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.Filter;
 import ru.savvy.soldo.booking.model.Booking;
 import ru.savvy.soldo.event.model.Event;
 import ru.savvy.soldo.notification.model.NotificationType;
@@ -12,7 +11,6 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "notifications")
-@Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -53,9 +51,6 @@ public class Notification {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
-
-    @Column(name = "tenant_id", nullable = false)
-    private Long tenantId;
 
     @PrePersist
     protected void onCreate() {

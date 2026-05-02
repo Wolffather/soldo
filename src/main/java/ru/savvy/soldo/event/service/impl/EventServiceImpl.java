@@ -17,7 +17,6 @@ import ru.savvy.soldo.event.service.EventService;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import ru.savvy.soldo.tenant.TenantContext;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -36,7 +35,6 @@ public class EventServiceImpl implements EventService {
     @Transactional
     public EventDTO create(EventDTO dto) {
         Event event = mapper.dtoToEntity(dto);
-        event.setTenantId(TenantContext.getCurrentTenantId());
         resolveCategory(dto, event);
 
         if (dto.getStatus() != null && !dto.getStatus().isBlank()) {

@@ -2,7 +2,6 @@ package ru.savvy.soldo.booking.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.Filter;
 import ru.savvy.soldo.booking.model.BookingStatus;
 import ru.savvy.soldo.booking.model.PaymentStatus;
 import ru.savvy.soldo.event.model.Event;
@@ -13,7 +12,6 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "bookings")
-@Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -71,9 +69,6 @@ public class Booking {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
-
-    @Column(name = "tenant_id", nullable = false)
-    private Long tenantId;
 
     @PrePersist
     protected void onCreate() {

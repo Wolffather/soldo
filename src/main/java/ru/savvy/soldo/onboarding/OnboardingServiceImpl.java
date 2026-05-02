@@ -1,21 +1,15 @@
 package ru.savvy.soldo.onboarding;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.savvy.soldo.config.AppConfig;
+import ru.savvy.soldo.config.AppConfigRepository;
 import ru.savvy.soldo.onboarding.dto.BusinessType;
 import ru.savvy.soldo.onboarding.dto.RegisterRequest;
 import ru.savvy.soldo.onboarding.dto.RegisterResponse;
-import ru.savvy.soldo.onboarding.dto.SlugCheckResponse;
-import ru.savvy.soldo.shared.exception.DataDuplicationException;
 import ru.savvy.soldo.shared.security.JwtTokenProvider;
-import ru.savvy.soldo.tenant.TenantConfigRepository;
-import ru.savvy.soldo.tenant.TenantRepository;
-import ru.savvy.soldo.tenant.model.Tenant;
-import ru.savvy.soldo.tenant.model.TenantConfig;
-import ru.savvy.soldo.tenant.model.TenantStatus;
 import ru.savvy.soldo.user.model.User;
 import ru.savvy.soldo.user.repository.UserRepository;
 import ru.savvy.soldo.widget.WidgetConfigRepository;
@@ -25,8 +19,9 @@ import ru.savvy.soldo.widget.model.WidgetConfig;
 @RequiredArgsConstructor
 public class OnboardingServiceImpl implements OnboardingService {
 
-    private final TenantRepository tenantRepository;
-    private final TenantConfigRepository tenantConfigRepository;
+    private static final Long SINGLETON_ID = 1L;
+
+    private final AppConfigRepository appConfigRepository;
     private final WidgetConfigRepository widgetConfigRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -35,40 +30,22 @@ public class OnboardingServiceImpl implements OnboardingService {
     @Override
     @Transactional
     public RegisterResponse register(RegisterRequest request) {
-        if (tenantRepository.findBySlug(request.getSlug()).isPresent()) {
-            throw new DataDuplicationException("Slug уже занят");
-        }
-
-        // 1. Create Tenant
-        Tenant tenant;
-        try {
-            tenant = tenantRepository.save(
-                    Tenant.builder()
-                            .slug(request.getSlug())
-                            .name(request.getOrgName())
-                            .status(TenantStatus.TRIAL)
-                            .build()
-            );
-        } catch (DataIntegrityViolationException e) {
-            throw new DataDuplicationException("Slug уже занят");
-        }
-
-        // 2. Create TenantConfig with terminology from businessType
+        // 1. Initialize AppConfig (org name + terminology)
         String[] terminology = getTerminology(request.getBusinessType());
-        TenantConfig tenantConfig = TenantConfig.builder()
-                .eventLabel(terminology[0])
-                .participantLabel(terminology[1])
-                .bookingLabel(terminology[2])
-                .build();
-        tenantConfig.setTenant(tenant);
-        tenantConfigRepository.save(tenantConfig);
+        AppConfig appConfig = appConfigRepository.findById(SINGLETON_ID)
+                .orElse(AppConfig.builder().id(SINGLETON_ID).build());
+        appConfig.setName(request.getOrgName());
+        appConfig.setEventLabel(terminology[0]);
+        appConfig.setParticipantLabel(terminology[1]);
+        appConfig.setBookingLabel(terminology[2]);
+        appConfigRepository.save(appConfig);
 
-        // 3. Create WidgetConfig with defaults
-        WidgetConfig widgetConfig = WidgetConfig.builder().build();
-        widgetConfig.setTenant(tenant);
-        widgetConfigRepository.save(widgetConfig);
+        // 2. Initialize WidgetConfig
+        if (widgetConfigRepository.findById(SINGLETON_ID).isEmpty()) {
+            widgetConfigRepository.save(WidgetConfig.builder().id(SINGLETON_ID).build());
+        }
 
-        // 5. Create admin User
+        // 3. Create admin User
         String firstName;
         String lastName;
         int spaceIdx = request.getAdminName().indexOf(' ');
@@ -87,41 +64,13 @@ public class OnboardingServiceImpl implements OnboardingService {
                 .username(request.getEmail())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
                 .role("ADMIN")
-                .tenantId(tenant.getId())
                 .build();
         user = userRepository.save(user);
 
-        // 6. Generate JWT
-        String token = jwtTokenProvider.generateToken(
-                String.valueOf(user.getId()), "ADMIN", tenant.getId()
-        );
+        // 4. Generate JWT
+        String token = jwtTokenProvider.generateToken(String.valueOf(user.getId()), "ADMIN");
 
-        return new RegisterResponse(token, tenant.getId(), tenant.getSlug(), tenant.getName());
-    }
-
-    @Override
-    public SlugCheckResponse checkSlug(String slug) {
-        if (tenantRepository.findBySlug(slug).isEmpty()) {
-            return new SlugCheckResponse(true, null);
-        }
-        // Find a free suggestion
-        int suffix = 2;
-        String candidate;
-        do {
-            candidate = slug + "-" + suffix;
-            suffix++;
-        } while (tenantRepository.findBySlug(candidate).isPresent());
-        return new SlugCheckResponse(false, candidate);
-    }
-
-    @Override
-    public String generateSlug(String orgName) {
-        String transliterated = transliterate(orgName);
-        return transliterated
-                .toLowerCase()
-                .replaceAll("[^a-z0-9]+", "-")
-                .replaceAll("^-|-$", "")
-                .trim();
+        return new RegisterResponse(token);
     }
 
     // -----------------------------------------------------------------------
@@ -129,59 +78,12 @@ public class OnboardingServiceImpl implements OnboardingService {
     // -----------------------------------------------------------------------
 
     private String[] getTerminology(BusinessType type) {
-        // returns [eventLabel, participantLabel, bookingLabel]
         return switch (type) {
             case CAMP   -> new String[]{"Смена",   "Участник", "Запись"};
             case STUDIO -> new String[]{"Занятие", "Клиент",   "Запись"};
             case SCHOOL -> new String[]{"Занятие", "Студент",  "Запись"};
-            case CLINIC -> new String[]{"Приём",   "Пациент",  "Запись"};
             case TOUR   -> new String[]{"Тур",     "Гость",    "Бронирование"};
             case OTHER  -> new String[]{"Событие", "Участник", "Бронирование"};
         };
-    }
-
-    private String transliterate(String input) {
-        StringBuilder sb = new StringBuilder(input.length() * 2);
-        for (int i = 0; i < input.length(); i++) {
-            char c = input.charAt(i);
-            String replacement = switch (c) {
-                case 'а', 'А' -> "a";
-                case 'б', 'Б' -> "b";
-                case 'в', 'В' -> "v";
-                case 'г', 'Г' -> "g";
-                case 'д', 'Д' -> "d";
-                case 'е', 'Е' -> "e";
-                case 'ё', 'Ё' -> "yo";
-                case 'ж', 'Ж' -> "zh";
-                case 'з', 'З' -> "z";
-                case 'и', 'И' -> "i";
-                case 'й', 'Й' -> "j";
-                case 'к', 'К' -> "k";
-                case 'л', 'Л' -> "l";
-                case 'м', 'М' -> "m";
-                case 'н', 'Н' -> "n";
-                case 'о', 'О' -> "o";
-                case 'п', 'П' -> "p";
-                case 'р', 'Р' -> "r";
-                case 'с', 'С' -> "s";
-                case 'т', 'Т' -> "t";
-                case 'у', 'У' -> "u";
-                case 'ф', 'Ф' -> "f";
-                case 'х', 'Х' -> "kh";
-                case 'ц', 'Ц' -> "ts";
-                case 'ч', 'Ч' -> "ch";
-                case 'ш', 'Ш' -> "sh";
-                case 'щ', 'Щ' -> "shch";
-                case 'ъ', 'Ъ' -> "";
-                case 'ы', 'Ы' -> "y";
-                case 'ь', 'Ь' -> "";
-                case 'э', 'Э' -> "e";
-                case 'ю', 'Ю' -> "yu";
-                case 'я', 'Я' -> "ya";
-                default        -> String.valueOf(c);
-            };
-            sb.append(replacement);
-        }
-        return sb.toString();
     }
 }

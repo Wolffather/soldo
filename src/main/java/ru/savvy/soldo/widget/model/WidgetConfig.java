@@ -2,12 +2,11 @@ package ru.savvy.soldo.widget.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import ru.savvy.soldo.tenant.model.Tenant;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "widget_configs")
+@Table(name = "widget_config")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -15,13 +14,7 @@ import java.time.LocalDateTime;
 public class WidgetConfig {
 
     @Id
-    @Column(name = "tenant_id")
-    private Long tenantId;
-
-    @MapsId
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "tenant_id")
-    private Tenant tenant;
+    private Long id;
 
     @Column(name = "primary_color")
     @Builder.Default

@@ -7,7 +7,4 @@ import lombok.Data;
 @AllArgsConstructor
 public class RegisterResponse {
     private String token;
-    private Long tenantId;
-    private String tenantSlug;
-    private String tenantName;
 }

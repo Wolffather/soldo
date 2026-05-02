@@ -7,9 +7,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.savvy.soldo.onboarding.dto.RegisterRequest;
 import ru.savvy.soldo.onboarding.dto.RegisterResponse;
-import ru.savvy.soldo.onboarding.dto.SlugCheckResponse;
-
-import java.util.Map;
 
 @RestController
 @RequestMapping("/public/onboarding")
@@ -23,15 +20,5 @@ public class OnboardingController {
     @ResponseStatus(HttpStatus.CREATED)
     public RegisterResponse register(@Valid @RequestBody RegisterRequest request) {
         return service.register(request);
-    }
-
-    @GetMapping("/check-slug")
-    public SlugCheckResponse checkSlug(@RequestParam String slug) {
-        return service.checkSlug(slug);
-    }
-
-    @GetMapping("/generate-slug")
-    public Map<String, String> generateSlug(@RequestParam String name) {
-        return Map.of("slug", service.generateSlug(name));
     }
 }

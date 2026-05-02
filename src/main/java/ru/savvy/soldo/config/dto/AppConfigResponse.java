@@ -1,4 +1,4 @@
-package ru.savvy.soldo.tenant.dto;
+package ru.savvy.soldo.config.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,14 +9,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TenantResponse {
-    private Long id;
-    private String slug;
+public class AppConfigResponse {
     private String name;
     private String domain;
-    private String status;
-
-    // Config labels
     private String eventLabel;
     private String participantLabel;
     private String bookingLabel;

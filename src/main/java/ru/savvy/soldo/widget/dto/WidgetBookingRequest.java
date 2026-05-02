@@ -13,9 +13,6 @@ import lombok.NoArgsConstructor;
 @Builder
 public class WidgetBookingRequest {
 
-    @NotBlank
-    private String tenantSlug;
-
     @NotNull
     private Long eventId;
 

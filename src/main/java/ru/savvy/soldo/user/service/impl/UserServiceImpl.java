@@ -9,7 +9,6 @@ import ru.savvy.soldo.user.model.UserRole;
 import ru.savvy.soldo.shared.exception.NotFoundException;
 import ru.savvy.soldo.user.model.User;
 import ru.savvy.soldo.user.repository.UserRepository;
-import ru.savvy.soldo.tenant.TenantContext;
 import ru.savvy.soldo.user.service.UserService;
 
 import java.util.List;
@@ -43,8 +42,6 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public User registerUser(UserRegisterRequest request) {
-        Long tenantId = TenantContext.getCurrentTenantId() != null
-                ? TenantContext.getCurrentTenantId() : 1L;
         User user = User.builder()
                 .username(request.getUsername())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
@@ -53,7 +50,6 @@ public class UserServiceImpl implements UserService {
                 .email(request.getEmail())
                 .phone(request.getPhone())
                 .role(UserRole.ADMIN.name())
-                .tenantId(tenantId)
                 .build();
         return repository.save(user);
     }

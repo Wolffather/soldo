@@ -1,5 +1,5 @@
 package ru.savvy.soldo.onboarding.dto;
 
 public enum BusinessType {
-    CAMP, STUDIO, SCHOOL, CLINIC, TOUR, OTHER
+    CAMP, STUDIO, SCHOOL, TOUR, OTHER
 }

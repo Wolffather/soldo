@@ -22,6 +22,4 @@ public class WidgetConfigResponse {
     private String customCss;
     private String categoryStepTitle;
     private String buttonLabel;
-    private String tenantSlug;
-    private String tenantName;
 }

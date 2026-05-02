@@ -8,7 +8,6 @@ import ru.savvy.soldo.event.model.EventCategory;
 import ru.savvy.soldo.event.model.EventFormat;
 import ru.savvy.soldo.event.repository.EventCategoryRepository;
 import ru.savvy.soldo.event.service.EventCategoryService;
-import ru.savvy.soldo.tenant.TenantContext;
 
 import java.util.List;
 
@@ -44,7 +43,6 @@ public class EventCategoryServiceImpl implements EventCategoryService {
                 .format(EventFormat.valueOf(dto.getFormat()))
                 .description(dto.getDescription())
                 .iconUrl(dto.getIconUrl())
-                .tenantId(TenantContext.getCurrentTenantId())
                 .build();
         return toDTO(categoryRepository.save(category));
     }

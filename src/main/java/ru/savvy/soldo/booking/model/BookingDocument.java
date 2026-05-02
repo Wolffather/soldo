@@ -2,15 +2,12 @@ package ru.savvy.soldo.booking.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.Filter;
-
 import ru.savvy.soldo.document.model.DocumentTemplate;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "booking_documents")
-@Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -57,9 +54,6 @@ public class BookingDocument {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
-
-    @Column(name = "tenant_id", nullable = false)
-    private Long tenantId;
 
     @PrePersist
     protected void onCreate() {

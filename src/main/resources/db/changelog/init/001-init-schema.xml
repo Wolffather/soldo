@@ -1,10 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-    Консолидированная начальная схема БД Soldo.
-    Заменяет все миграции из v1–v6, накопившиеся за время разработки.
-
-    Порядок changeSet'ов соответствует зависимостям FK:
-    tenants → users → events → bookings → документы/уведомления → контент сайта.
+    Начальная схема БД Soldo (single-tenant, self-deploy).
 -->
 <databaseChangeLog
         xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
@@ -14,39 +10,18 @@
             http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
 
     <!-- ═══════════════════════════════════════════════════════════════════
-         МУЛЬТИТЕНАНТНОСТЬ
+         НАСТРОЙКИ ПРИЛОЖЕНИЯ
          ═══════════════════════════════════════════════════════════════════ -->
 
-    <changeSet id="init-001-tenants" author="savvy">
-        <createTable tableName="tenants">
-            <column name="id" type="BIGINT" autoIncrement="true">
+    <changeSet id="init-001-app-config" author="savvy">
+        <createTable tableName="app_config">
+            <column name="id" type="BIGINT">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="slug" type="VARCHAR(100)">
-                <constraints nullable="false" unique="true" uniqueConstraintName="uq_tenants_slug"/>
-            </column>
-            <column name="name" type="VARCHAR(255)">
+            <column name="name" type="VARCHAR(255)" defaultValue="Моя организация">
                 <constraints nullable="false"/>
             </column>
             <column name="domain" type="VARCHAR(255)"/>
-            <column name="status" type="VARCHAR(50)" defaultValue="TRIAL">
-                <constraints nullable="false"/>
-            </column>
-            <column name="trial_ends_at" type="TIMESTAMPTZ"/>
-            <column name="created_at" type="TIMESTAMPTZ" defaultValueComputed="NOW()">
-                <constraints nullable="false"/>
-            </column>
-        </createTable>
-    </changeSet>
-
-    <changeSet id="init-002-tenant-configs" author="savvy">
-        <createTable tableName="tenant_configs">
-            <column name="tenant_id" type="BIGINT">
-                <constraints primaryKey="true" nullable="false"
-                             foreignKeyName="fk_tenant_config_tenant"
-                             referencedTableName="tenants"
-                             referencedColumnNames="id"/>
-            </column>
             <column name="event_label" type="VARCHAR(100)" defaultValue="Событие">
                 <constraints nullable="false"/>
             </column>
@@ -56,22 +31,14 @@
             <column name="booking_label" type="VARCHAR(100)" defaultValue="Бронирование">
                 <constraints nullable="false"/>
             </column>
-            <column name="booking_rules" type="JSONB" defaultValue="{}">
-                <constraints nullable="false"/>
-            </column>
-            <column name="profile_fields" type="JSONB" defaultValue="[]">
-                <constraints nullable="false"/>
-            </column>
-            <column name="notifications_config" type="JSONB" defaultValue="{}">
-                <constraints nullable="false"/>
-            </column>
-            <column name="branding" type="JSONB" defaultValue="{}">
-                <constraints nullable="false"/>
-            </column>
-            <column name="telegram_bot_token" type="VARCHAR(255)"/>
-            <column name="telegram_bot_username" type="VARCHAR(100)"/>
-            <column name="telegram_webhook_secret" type="VARCHAR(255)"/>
         </createTable>
+        <insert tableName="app_config">
+            <column name="id" valueNumeric="1"/>
+            <column name="name" value="Моя организация"/>
+            <column name="event_label" value="Событие"/>
+            <column name="participant_label" value="Участник"/>
+            <column name="booking_label" value="Бронирование"/>
+        </insert>
     </changeSet>
 
     <!-- ═══════════════════════════════════════════════════════════════════
@@ -92,49 +59,7 @@
             <column name="phone" type="VARCHAR(50)"/>
             <column name="email" type="VARCHAR(255)"/>
             <column name="created_at" type="TIMESTAMP"/>
-            <column name="tenant_id" type="BIGINT">
-                <constraints nullable="false"
-                             foreignKeyName="fk_users_tenant"
-                             referencedTableName="tenants"
-                             referencedColumnNames="id"/>
-            </column>
         </createTable>
-        <createIndex tableName="users" indexName="idx_users_tenant_id">
-            <column name="tenant_id"/>
-        </createIndex>
-    </changeSet>
-
-    <changeSet id="init-011-user-auth-providers" author="savvy">
-        <createTable tableName="user_auth_providers">
-            <column name="id" type="BIGINT" autoIncrement="true">
-                <constraints primaryKey="true" nullable="false"/>
-            </column>
-            <column name="user_id" type="BIGINT">
-                <constraints nullable="false"
-                             foreignKeyName="fk_user_auth_providers_user"
-                             referencedTableName="users"
-                             referencedColumnNames="id"/>
-            </column>
-            <column name="provider" type="VARCHAR(50)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="provider_user_id" type="VARCHAR(255)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="created_at" type="TIMESTAMP"/>
-            <column name="tenant_id" type="BIGINT">
-                <constraints nullable="false"
-                             foreignKeyName="fk_user_auth_providers_tenant"
-                             referencedTableName="tenants"
-                             referencedColumnNames="id"/>
-            </column>
-        </createTable>
-        <addUniqueConstraint tableName="user_auth_providers"
-                             columnNames="provider, provider_user_id"
-                             constraintName="uq_provider_user_id"/>
-        <createIndex tableName="user_auth_providers" indexName="idx_user_auth_providers_tenant_id">
-            <column name="tenant_id"/>
-        </createIndex>
     </changeSet>
 
     <changeSet id="init-012-participant-profiles" author="savvy">
@@ -169,16 +94,7 @@
             <column name="consent_date" type="TIMESTAMP"/>
             <column name="created_at" type="TIMESTAMP"/>
             <column name="updated_at" type="TIMESTAMP"/>
-            <column name="tenant_id" type="BIGINT">
-                <constraints nullable="false"
-                             foreignKeyName="fk_participant_profiles_tenant"
-                             referencedTableName="tenants"
-                             referencedColumnNames="id"/>
-            </column>
         </createTable>
-        <createIndex tableName="participant_profiles" indexName="idx_participant_profiles_tenant_id">
-            <column name="tenant_id"/>
-        </createIndex>
     </changeSet>
 
     <!-- ═══════════════════════════════════════════════════════════════════
@@ -199,16 +115,7 @@
             <column name="description" type="VARCHAR(1000)"/>
             <column name="icon_url" type="VARCHAR(500)"/>
             <column name="created_at" type="TIMESTAMP"/>
-            <column name="tenant_id" type="BIGINT">
-                <constraints nullable="false"
-                             foreignKeyName="fk_event_categories_tenant"
-                             referencedTableName="tenants"
-                             referencedColumnNames="id"/>
-            </column>
         </createTable>
-        <createIndex tableName="event_categories" indexName="idx_event_categories_tenant_id">
-            <column name="tenant_id"/>
-        </createIndex>
     </changeSet>
 
     <changeSet id="init-021-events" author="savvy">
@@ -233,25 +140,13 @@
             <column name="price_with_certificate" type="DECIMAL(10,2)"/>
             <column name="status" type="VARCHAR(50)" defaultValue="PUBLISHED"/>
             <column name="created_at" type="TIMESTAMP"/>
-            <column name="tenant_id" type="BIGINT">
-                <constraints nullable="false"
-                             foreignKeyName="fk_events_tenant"
-                             referencedTableName="tenants"
-                             referencedColumnNames="id"/>
-            </column>
         </createTable>
-        <createIndex tableName="events" indexName="idx_events_tenant_id">
-            <column name="tenant_id"/>
-        </createIndex>
         <createIndex tableName="events" indexName="idx_events_category_id">
             <column name="category_id"/>
         </createIndex>
     </changeSet>
 
     <changeSet id="init-022-event-bookings-summary" author="savvy">
-        <!--
-            event_bookings_summary.id = event_id (через @MapsId). PK = event_id.
-        -->
         <createTable tableName="event_bookings_summary">
             <column name="event_id" type="BIGINT">
                 <constraints primaryKey="true" nullable="false"
@@ -311,23 +206,10 @@
             <column name="has_certificate" type="BOOLEAN" defaultValueBoolean="false">
                 <constraints nullable="false"/>
             </column>
-            <column name="telegram_chat_id" type="BIGINT"/>
             <column name="created_at" type="TIMESTAMP"/>
-            <column name="tenant_id" type="BIGINT">
-                <constraints nullable="false"
-                             foreignKeyName="fk_bookings_tenant"
-                             referencedTableName="tenants"
-                             referencedColumnNames="id"/>
-            </column>
         </createTable>
         <createIndex tableName="bookings" indexName="idx_bookings_event_id">
             <column name="event_id"/>
-        </createIndex>
-        <createIndex tableName="bookings" indexName="idx_bookings_tenant_id">
-            <column name="tenant_id"/>
-        </createIndex>
-        <createIndex tableName="bookings" indexName="idx_bookings_telegram_chat_id">
-            <column name="telegram_chat_id"/>
         </createIndex>
     </changeSet>
 
@@ -351,16 +233,7 @@
             <column name="is_required" type="BOOLEAN" defaultValueBoolean="true"/>
             <column name="requires_signature" type="BOOLEAN" defaultValueBoolean="true"/>
             <column name="created_at" type="TIMESTAMP"/>
-            <column name="tenant_id" type="BIGINT">
-                <constraints nullable="false"
-                             foreignKeyName="fk_document_templates_tenant"
-                             referencedTableName="tenants"
-                             referencedColumnNames="id"/>
-            </column>
         </createTable>
-        <createIndex tableName="document_templates" indexName="idx_document_templates_tenant_id">
-            <column name="tenant_id"/>
-        </createIndex>
     </changeSet>
 
     <changeSet id="init-041-booking-documents" author="savvy">
@@ -387,18 +260,9 @@
             <column name="signer_ip" type="VARCHAR(64)"/>
             <column name="filled_data" type="TEXT"/>
             <column name="created_at" type="TIMESTAMP"/>
-            <column name="tenant_id" type="BIGINT">
-                <constraints nullable="false"
-                             foreignKeyName="fk_booking_documents_tenant"
-                             referencedTableName="tenants"
-                             referencedColumnNames="id"/>
-            </column>
         </createTable>
         <createIndex tableName="booking_documents" indexName="idx_booking_documents_booking_id">
             <column name="booking_id"/>
-        </createIndex>
-        <createIndex tableName="booking_documents" indexName="idx_booking_documents_tenant_id">
-            <column name="tenant_id"/>
         </createIndex>
     </changeSet>
 
@@ -440,16 +304,7 @@
             <column name="sent_at" type="TIMESTAMP"/>
             <column name="scheduled_at" type="TIMESTAMP"/>
             <column name="created_at" type="TIMESTAMP"/>
-            <column name="tenant_id" type="BIGINT">
-                <constraints nullable="false"
-                             foreignKeyName="fk_notifications_tenant"
-                             referencedTableName="tenants"
-                             referencedColumnNames="id"/>
-            </column>
         </createTable>
-        <createIndex tableName="notifications" indexName="idx_notifications_tenant_id">
-            <column name="tenant_id"/>
-        </createIndex>
     </changeSet>
 
     <changeSet id="init-051-inquiries" author="savvy">
@@ -465,16 +320,7 @@
             <column name="event_title" type="VARCHAR(255)"/>
             <column name="message" type="TEXT"/>
             <column name="created_at" type="TIMESTAMP"/>
-            <column name="tenant_id" type="BIGINT">
-                <constraints nullable="false"
-                             foreignKeyName="fk_inquiries_tenant"
-                             referencedTableName="tenants"
-                             referencedColumnNames="id"/>
-            </column>
         </createTable>
-        <createIndex tableName="inquiries" indexName="idx_inquiries_tenant_id">
-            <column name="tenant_id"/>
-        </createIndex>
     </changeSet>
 
     <!-- ═══════════════════════════════════════════════════════════════════
@@ -509,13 +355,10 @@
         </insert>
     </changeSet>
 
-    <changeSet id="init-061-widget-configs" author="savvy">
-        <createTable tableName="widget_configs">
-            <column name="tenant_id" type="BIGINT">
-                <constraints primaryKey="true" nullable="false"
-                             foreignKeyName="fk_widget_configs_tenant"
-                             referencedTableName="tenants"
-                             referencedColumnNames="id"/>
+    <changeSet id="init-061-widget-config" author="savvy">
+        <createTable tableName="widget_config">
+            <column name="id" type="BIGINT">
+                <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="primary_color" type="VARCHAR(20)" defaultValue="#2563eb"/>
             <column name="background_color" type="VARCHAR(20)" defaultValue="#ffffff"/>
@@ -531,10 +374,13 @@
             <column name="button_label" type="VARCHAR(100)" defaultValue="Записаться"/>
             <column name="updated_at" type="TIMESTAMP"/>
         </createTable>
+        <insert tableName="widget_config">
+            <column name="id" valueNumeric="1"/>
+        </insert>
     </changeSet>
 
     <!-- ═══════════════════════════════════════════════════════════════════
-         КОНТЕНТ САЙТА (глобальный, без tenant_id)
+         КОНТЕНТ САЙТА
          ═══════════════════════════════════════════════════════════════════ -->
 
     <changeSet id="init-070-site-settings" author="savvy">

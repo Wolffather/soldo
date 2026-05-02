@@ -2,14 +2,11 @@ package ru.savvy.soldo.user.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.Filter;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "participant_profiles")
-@Filter(name = "tenantFilter", condition = "tenant_id = :tenantId")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -84,9 +81,6 @@ public class ParticipantProfile {
 
     @Column(name = "consent_date")
     private LocalDateTime consentDate;
-
-    @Column(name = "tenant_id", nullable = false)
-    private Long tenantId;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

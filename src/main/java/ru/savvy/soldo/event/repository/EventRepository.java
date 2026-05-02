@@ -30,32 +30,18 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     @Query("SELECT e FROM Event e WHERE e.status = 'PUBLISHED' AND e.startDate BETWEEN :start AND :end")
     List<Event> findByDateRange(LocalDate start, LocalDate end);
 
-    // ─── Bot API queries ──────────────────────────────────────────────────────
-
-    /**
-     * Distinct category IDs for which there are published upcoming events for a tenant.
-     * Used by the bot to show only categories with available content.
-     */
     @Query("SELECT DISTINCT e.category.id FROM Event e " +
-           "WHERE e.tenantId = :tenantId " +
-           "AND e.status = ru.savvy.soldo.event.model.EventStatus.PUBLISHED " +
+           "WHERE e.status = ru.savvy.soldo.event.model.EventStatus.PUBLISHED " +
            "AND e.category IS NOT NULL " +
            "AND e.startDate >= :today")
-    List<Long> findUpcomingCategoryIdsByTenantId(
-            @Param("tenantId") Long tenantId,
-            @Param("today") LocalDate today);
+    List<Long> findUpcomingCategoryIds(@Param("today") LocalDate today);
 
-    /**
-     * Published upcoming events by category and tenant, ordered by start date.
-     */
     @Query("SELECT e FROM Event e LEFT JOIN FETCH e.category " +
            "WHERE e.category.id = :categoryId " +
-           "AND e.tenantId = :tenantId " +
            "AND e.status = ru.savvy.soldo.event.model.EventStatus.PUBLISHED " +
            "AND e.startDate >= :today " +
            "ORDER BY e.startDate ASC NULLS LAST")
-    List<Event> findPublishedUpcomingByCategoryAndTenant(
+    List<Event> findPublishedUpcomingByCategory(
             @Param("categoryId") Long categoryId,
-            @Param("tenantId") Long tenantId,
             @Param("today") LocalDate today);
 }

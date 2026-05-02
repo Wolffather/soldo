@@ -15,9 +15,6 @@ import ru.savvy.soldo.event.repository.EventCategoryRepository;
 import ru.savvy.soldo.event.repository.EventRepository;
 import ru.savvy.soldo.shared.exception.IllegalOperationException;
 import ru.savvy.soldo.shared.exception.NotFoundException;
-import ru.savvy.soldo.tenant.TenantRepository;
-import ru.savvy.soldo.tenant.model.Tenant;
-import ru.savvy.soldo.user.repository.UserRepository;
 import ru.savvy.soldo.widget.dto.WidgetBookingRequest;
 import ru.savvy.soldo.widget.dto.WidgetBookingResponse;
 import ru.savvy.soldo.widget.dto.WidgetCategoryResponse;
@@ -34,8 +31,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class WidgetServiceImpl implements WidgetService {
 
-    private final TenantRepository tenantRepository;
-    private final UserRepository userRepository;
+    private static final Long CONFIG_ID = 1L;
+
     private final WidgetConfigRepository widgetConfigRepository;
     private final EventCategoryRepository eventCategoryRepository;
     private final EventRepository eventRepository;
@@ -44,39 +41,14 @@ public class WidgetServiceImpl implements WidgetService {
 
     @Override
     @Transactional
-    public WidgetConfigResponse getConfig(String tenantSlug) {
-        Tenant tenant = resolveTenant(tenantSlug);
-        WidgetConfig config = widgetConfigRepository.findById(tenant.getId())
-                .orElseGet(() -> createDefaultConfig(tenant));
-        return toConfigResponse(config, tenant);
+    public WidgetConfigResponse getConfig() {
+        return toConfigResponse(loadOrCreateConfig());
     }
 
     @Override
     @Transactional
-    public WidgetConfigResponse getConfigByUserId(Long userId) {
-        Long tenantId = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("Пользователь не найден"))
-                .getTenantId();
-        Tenant tenant = tenantRepository.findById(tenantId)
-                .orElseThrow(() -> new NotFoundException("Тенант не найден"));
-        WidgetConfig config = widgetConfigRepository.findById(tenantId)
-                .orElseGet(() -> createDefaultConfig(tenant));
-        return toConfigResponse(config, tenant);
-    }
-
-    @Override
-    @Transactional
-    public WidgetConfigResponse updateConfig(Long userId, WidgetConfigUpdateRequest req) {
-        Long tenantId = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("Пользователь не найден"))
-                .getTenantId();
-
-        Tenant tenant = tenantRepository.findById(tenantId)
-                .orElseThrow(() -> new NotFoundException("Тенант не найден"));
-
-        WidgetConfig config = widgetConfigRepository.findById(tenantId)
-                .orElseGet(() -> createDefaultConfig(tenant));
-
+    public WidgetConfigResponse updateConfig(WidgetConfigUpdateRequest req) {
+        WidgetConfig config = loadOrCreateConfig();
         if (req.getPrimaryColor() != null) config.setPrimaryColor(req.getPrimaryColor());
         if (req.getBackgroundColor() != null) config.setBackgroundColor(req.getBackgroundColor());
         if (req.getTextColor() != null) config.setTextColor(req.getTextColor());
@@ -88,38 +60,28 @@ public class WidgetServiceImpl implements WidgetService {
         if (req.getCustomCss() != null) config.setCustomCss(req.getCustomCss());
         if (req.getCategoryStepTitle() != null) config.setCategoryStepTitle(req.getCategoryStepTitle());
         if (req.getButtonLabel() != null) config.setButtonLabel(req.getButtonLabel());
-
-        config = widgetConfigRepository.save(config);
-        return toConfigResponse(config, tenant);
+        return toConfigResponse(widgetConfigRepository.save(config));
     }
 
     @Override
-    public List<WidgetCategoryResponse> getCategories(String tenantSlug) {
-        Tenant tenant = resolveTenant(tenantSlug);
-        List<Long> activeCategoryIds = eventRepository
-                .findUpcomingCategoryIdsByTenantId(tenant.getId(), LocalDate.now());
+    public List<WidgetCategoryResponse> getCategories() {
+        List<Long> activeCategoryIds = eventRepository.findUpcomingCategoryIds(LocalDate.now());
         return eventCategoryRepository.findAllById(activeCategoryIds).stream()
                 .map(this::toCategoryResponse)
                 .toList();
     }
 
     @Override
-    public List<WidgetEventResponse> getEvents(String tenantSlug, Long categoryId) {
-        Tenant tenant = resolveTenant(tenantSlug);
+    public List<WidgetEventResponse> getEvents(Long categoryId) {
         if (categoryId != null) {
-            return eventRepository
-                    .findPublishedUpcomingByCategoryAndTenant(categoryId, tenant.getId(), LocalDate.now())
+            return eventRepository.findPublishedUpcomingByCategory(categoryId, LocalDate.now())
                     .stream()
                     .map(e -> toEventResponse(e, summaryRepository.findAvailableSeatsByEventId(e.getId())))
                     .toList();
         }
-        // No categoryId — return all published upcoming events for tenant
-        List<Long> categoryIds = eventRepository
-                .findUpcomingCategoryIdsByTenantId(tenant.getId(), LocalDate.now());
+        List<Long> categoryIds = eventRepository.findUpcomingCategoryIds(LocalDate.now());
         return categoryIds.stream()
-                .flatMap(catId -> eventRepository
-                        .findPublishedUpcomingByCategoryAndTenant(catId, tenant.getId(), LocalDate.now())
-                        .stream())
+                .flatMap(catId -> eventRepository.findPublishedUpcomingByCategory(catId, LocalDate.now()).stream())
                 .map(e -> toEventResponse(e, summaryRepository.findAvailableSeatsByEventId(e.getId())))
                 .toList();
     }
@@ -127,14 +89,10 @@ public class WidgetServiceImpl implements WidgetService {
     @Override
     @Transactional
     public WidgetBookingResponse createBooking(WidgetBookingRequest req) {
-        Tenant tenant = resolveTenant(req.getTenantSlug());
-
         Event event = eventRepository.findByIdWithCategory(req.getEventId())
-                .filter(e -> e.getTenantId().equals(tenant.getId()))
                 .filter(e -> e.getStatus() == EventStatus.PUBLISHED)
                 .orElseThrow(() -> new NotFoundException("Событие не найдено или недоступно"));
 
-        // Check available spots
         summaryRepository.findByEventId(event.getId()).ifPresent(summary -> {
             if (summary.getNumOfParticipants() <= 0) {
                 throw new IllegalOperationException("Нет свободных мест");
@@ -161,35 +119,24 @@ public class WidgetServiceImpl implements WidgetService {
                 .paymentStatus(paymentStatus)
                 .amountDue(amountDue)
                 .paymentDeadline(paymentDeadline)
-                .tenantId(tenant.getId())
                 .build();
 
         booking = bookingRepository.save(booking);
         summaryRepository.onCreatePending(event.getId());
 
-        String successMessage = widgetConfigRepository.findById(tenant.getId())
+        String successMessage = widgetConfigRepository.findById(CONFIG_ID)
                 .map(WidgetConfig::getSuccessMessage)
                 .orElse("Бронирование успешно создано! Мы свяжемся с вами.");
 
         return toBookingResponse(booking, successMessage);
     }
 
-    // ─── Helpers ────────────────────────────────────────────────────────────────
-
-    private Tenant resolveTenant(String slug) {
-        return tenantRepository.findBySlug(slug)
-                .orElseThrow(() -> new NotFoundException("Тенант не найден: " + slug));
+    private WidgetConfig loadOrCreateConfig() {
+        return widgetConfigRepository.findById(CONFIG_ID).orElseGet(() ->
+                widgetConfigRepository.save(WidgetConfig.builder().id(CONFIG_ID).build()));
     }
 
-    private WidgetConfig createDefaultConfig(Tenant tenant) {
-        WidgetConfig config = WidgetConfig.builder()
-                .tenantId(tenant.getId())
-                .tenant(tenant)
-                .build();
-        return widgetConfigRepository.save(config);
-    }
-
-    private WidgetConfigResponse toConfigResponse(WidgetConfig config, Tenant tenant) {
+    private WidgetConfigResponse toConfigResponse(WidgetConfig config) {
         return WidgetConfigResponse.builder()
                 .primaryColor(config.getPrimaryColor())
                 .backgroundColor(config.getBackgroundColor())
@@ -202,8 +149,6 @@ public class WidgetServiceImpl implements WidgetService {
                 .customCss(config.getCustomCss())
                 .categoryStepTitle(config.getCategoryStepTitle())
                 .buttonLabel(config.getButtonLabel())
-                .tenantSlug(tenant.getSlug())
-                .tenantName(tenant.getName())
                 .build();
     }
 

@@ -11,15 +11,13 @@ import java.util.List;
 
 public interface WidgetService {
 
-    WidgetConfigResponse getConfig(String tenantSlug);
+    WidgetConfigResponse getConfig();
 
-    WidgetConfigResponse getConfigByUserId(Long userId);
+    WidgetConfigResponse updateConfig(WidgetConfigUpdateRequest req);
 
-    WidgetConfigResponse updateConfig(Long userId, WidgetConfigUpdateRequest req);
+    List<WidgetCategoryResponse> getCategories();
 
-    List<WidgetCategoryResponse> getCategories(String tenantSlug);
-
-    List<WidgetEventResponse> getEvents(String tenantSlug, Long categoryId);
+    List<WidgetEventResponse> getEvents(Long categoryId);
 
     WidgetBookingResponse createBooking(WidgetBookingRequest req);
 }
