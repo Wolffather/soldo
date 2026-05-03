@@ -267,45 +267,8 @@
     </changeSet>
 
     <!-- ═══════════════════════════════════════════════════════════════════
-         УВЕДОМЛЕНИЯ И ЗАПРОСЫ
+         ЗАПРОСЫ
          ═══════════════════════════════════════════════════════════════════ -->
-
-    <changeSet id="init-050-notifications" author="savvy">
-        <createTable tableName="notifications">
-            <column name="id" type="BIGINT" autoIncrement="true">
-                <constraints primaryKey="true" nullable="false"/>
-            </column>
-            <column name="user_id" type="BIGINT">
-                <constraints nullable="false"
-                             foreignKeyName="fk_notifications_user"
-                             referencedTableName="users"
-                             referencedColumnNames="id"
-                             deleteCascade="true"/>
-            </column>
-            <column name="booking_id" type="BIGINT">
-                <constraints foreignKeyName="fk_notifications_booking"
-                             referencedTableName="bookings"
-                             referencedColumnNames="id"
-                             deleteCascade="true"/>
-            </column>
-            <column name="event_id" type="BIGINT">
-                <constraints foreignKeyName="fk_notifications_event"
-                             referencedTableName="events"
-                             referencedColumnNames="id"
-                             deleteCascade="true"/>
-            </column>
-            <column name="type" type="VARCHAR(50)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="message" type="VARCHAR(1000)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="sent" type="BOOLEAN" defaultValueBoolean="false"/>
-            <column name="sent_at" type="TIMESTAMP"/>
-            <column name="scheduled_at" type="TIMESTAMP"/>
-            <column name="created_at" type="TIMESTAMP"/>
-        </createTable>
-    </changeSet>
 
     <changeSet id="init-051-inquiries" author="savvy">
         <createTable tableName="inquiries">
@@ -324,36 +287,8 @@
     </changeSet>
 
     <!-- ═══════════════════════════════════════════════════════════════════
-         НАСТРОЙКИ ПЛАНИРОВЩИКА И ВИДЖЕТА
+         ВИДЖЕТ
          ═══════════════════════════════════════════════════════════════════ -->
-
-    <changeSet id="init-060-scheduler-settings" author="savvy">
-        <createTable tableName="scheduler_settings">
-            <column name="id" type="BIGINT">
-                <constraints primaryKey="true" nullable="false"/>
-            </column>
-            <column name="event_reminder_cron" type="VARCHAR(50)" defaultValue="0 0 10 * * *">
-                <constraints nullable="false"/>
-            </column>
-            <column name="payment_reminder_cron" type="VARCHAR(50)" defaultValue="0 0 9 * * *">
-                <constraints nullable="false"/>
-            </column>
-            <column name="event_reminder_days_before" type="INTEGER" defaultValueNumeric="1">
-                <constraints nullable="false"/>
-            </column>
-            <column name="payment_reminder_days_before" type="INTEGER" defaultValueNumeric="3">
-                <constraints nullable="false"/>
-            </column>
-            <column name="updated_at" type="TIMESTAMP"/>
-        </createTable>
-        <insert tableName="scheduler_settings">
-            <column name="id" valueNumeric="1"/>
-            <column name="event_reminder_cron" value="0 0 10 * * *"/>
-            <column name="payment_reminder_cron" value="0 0 9 * * *"/>
-            <column name="event_reminder_days_before" valueNumeric="1"/>
-            <column name="payment_reminder_days_before" valueNumeric="3"/>
-        </insert>
-    </changeSet>
 
     <changeSet id="init-061-widget-config" author="savvy">
         <createTable tableName="widget_config">
@@ -379,62 +314,5 @@
         </insert>
     </changeSet>
 
-    <!-- ═══════════════════════════════════════════════════════════════════
-         КОНТЕНТ САЙТА
-         ═══════════════════════════════════════════════════════════════════ -->
-
-    <changeSet id="init-070-site-settings" author="savvy">
-        <createTable tableName="site_settings">
-            <column name="id" type="BIGINT" autoIncrement="true">
-                <constraints primaryKey="true" nullable="false"/>
-            </column>
-            <column name="setting_key" type="VARCHAR(200)">
-                <constraints nullable="false" unique="true" uniqueConstraintName="uq_site_settings_key"/>
-            </column>
-            <column name="setting_value" type="TEXT"/>
-        </createTable>
-    </changeSet>
-
-    <changeSet id="init-071-team-members" author="savvy">
-        <createTable tableName="team_members">
-            <column name="id" type="BIGINT" autoIncrement="true">
-                <constraints primaryKey="true" nullable="false"/>
-            </column>
-            <column name="name" type="VARCHAR(200)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="role" type="VARCHAR(300)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="initials" type="VARCHAR(10)"/>
-            <column name="bio" type="TEXT"/>
-            <column name="quote" type="TEXT"/>
-            <column name="photo_url" type="VARCHAR(500)"/>
-            <column name="sort_order" type="INTEGER" defaultValueNumeric="0">
-                <constraints nullable="false"/>
-            </column>
-            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
-                <constraints nullable="false"/>
-            </column>
-        </createTable>
-    </changeSet>
-
-    <changeSet id="init-072-gallery-items" author="savvy">
-        <createTable tableName="gallery_items">
-            <column name="id" type="BIGINT" autoIncrement="true">
-                <constraints primaryKey="true" nullable="false"/>
-            </column>
-            <column name="image_url" type="VARCHAR(500)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="caption" type="VARCHAR(300)"/>
-            <column name="sort_order" type="INTEGER" defaultValueNumeric="0">
-                <constraints nullable="false"/>
-            </column>
-            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
-                <constraints nullable="false"/>
-            </column>
-        </createTable>
-    </changeSet>
 
 </databaseChangeLog>
