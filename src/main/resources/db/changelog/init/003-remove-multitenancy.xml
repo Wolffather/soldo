@@ -78,6 +78,12 @@
         <renameTable oldTableName="widget_configs" newTableName="widget_config"/>
     </changeSet>
 
+    <changeSet id="v7-013-fix-widget-config-pk" author="savvy">
+        <!-- widget_configs имел tenant_id как PK; переименовываем в id под Java-entity -->
+        <renameColumn tableName="widget_config" oldColumnName="tenant_id" newColumnName="id" columnDataType="BIGINT"/>
+        <sql>INSERT INTO widget_config (id) SELECT 1 WHERE NOT EXISTS (SELECT 1 FROM widget_config WHERE id = 1)</sql>
+    </changeSet>
+
     <changeSet id="v7-012-create-app-config" author="savvy">
         <createTable tableName="app_config">
             <column name="id" type="BIGINT">
