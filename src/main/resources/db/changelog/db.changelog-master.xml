@@ -24,5 +24,6 @@
 
     <include file="db/changelog/init/001-init-schema.xml"/>
     <include file="db/changelog/init/002-booking-summary-functions.sql"/>
+    <include file="db/changelog/init/003-remove-multitenancy.xml"/>
 
 </databaseChangeLog>

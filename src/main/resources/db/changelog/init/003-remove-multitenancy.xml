@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <!-- Удаление мультитенантности: каждый клиент деплоит собственный экземпляр -->
+
+    <changeSet id="v7-001-drop-dependent-tables" author="savvy">
+        <!-- Сначала таблицы, которые имеют FK на tenant или на другие удаляемые таблицы -->
+        <dropTable tableName="notifications" cascadeConstraints="true"/>
+        <dropTable tableName="user_auth_providers" cascadeConstraints="true"/>
+        <dropTable tableName="tenant_subscriptions" cascadeConstraints="true"/>
+        <dropTable tableName="tenant_configs" cascadeConstraints="true"/>
+        <dropTable tableName="scheduler_settings" cascadeConstraints="true"/>
+        <dropTable tableName="site_settings" cascadeConstraints="true"/>
+        <dropTable tableName="team_members" cascadeConstraints="true"/>
+        <dropTable tableName="gallery_items" cascadeConstraints="true"/>
+    </changeSet>
+
+    <changeSet id="v7-002-drop-tenant-id-from-users" author="savvy">
+        <dropIndex tableName="users" indexName="idx_users_tenant_id"/>
+        <dropForeignKeyConstraint baseTableName="users" constraintName="fk_users_tenant"/>
+        <dropColumn tableName="users" columnName="tenant_id"/>
+    </changeSet>
+
+    <changeSet id="v7-003-drop-tenant-id-from-participant-profiles" author="savvy">
+        <dropIndex tableName="participant_profiles" indexName="idx_participant_profiles_tenant_id"/>
+        <dropForeignKeyConstraint baseTableName="participant_profiles" constraintName="fk_participant_profiles_tenant"/>
+        <dropColumn tableName="participant_profiles" columnName="tenant_id"/>
+    </changeSet>
+
+    <changeSet id="v7-004-drop-tenant-id-from-event-categories" author="savvy">
+        <dropIndex tableName="event_categories" indexName="idx_event_categories_tenant_id"/>
+        <dropForeignKeyConstraint baseTableName="event_categories" constraintName="fk_event_categories_tenant"/>
+        <dropColumn tableName="event_categories" columnName="tenant_id"/>
+    </changeSet>
+
+    <changeSet id="v7-005-drop-tenant-id-from-events" author="savvy">
+        <dropIndex tableName="events" indexName="idx_events_tenant_id"/>
+        <dropForeignKeyConstraint baseTableName="events" constraintName="fk_events_tenant"/>
+        <dropColumn tableName="events" columnName="tenant_id"/>
+    </changeSet>
+
+    <changeSet id="v7-006-drop-tenant-cols-from-bookings" author="savvy">
+        <dropIndex tableName="bookings" indexName="idx_bookings_tenant_id"/>
+        <dropIndex tableName="bookings" indexName="idx_bookings_telegram_chat_id"/>
+        <dropForeignKeyConstraint baseTableName="bookings" constraintName="fk_bookings_tenant"/>
+        <dropColumn tableName="bookings" columnName="tenant_id"/>
+        <dropColumn tableName="bookings" columnName="telegram_chat_id"/>
+    </changeSet>
+
+    <changeSet id="v7-007-drop-tenant-id-from-document-templates" author="savvy">
+        <dropIndex tableName="document_templates" indexName="idx_document_templates_tenant_id"/>
+        <dropForeignKeyConstraint baseTableName="document_templates" constraintName="fk_document_templates_tenant"/>
+        <dropColumn tableName="document_templates" columnName="tenant_id"/>
+    </changeSet>
+
+    <changeSet id="v7-008-drop-tenant-id-from-booking-documents" author="savvy">
+        <dropIndex tableName="booking_documents" indexName="idx_booking_documents_tenant_id"/>
+        <dropForeignKeyConstraint baseTableName="booking_documents" constraintName="fk_booking_documents_tenant"/>
+        <dropColumn tableName="booking_documents" columnName="tenant_id"/>
+    </changeSet>
+
+    <changeSet id="v7-009-drop-tenant-id-from-inquiries" author="savvy">
+        <dropIndex tableName="inquiries" indexName="idx_inquiries_tenant_id"/>
+        <dropForeignKeyConstraint baseTableName="inquiries" constraintName="fk_inquiries_tenant"/>
+        <dropColumn tableName="inquiries" columnName="tenant_id"/>
+    </changeSet>
+
+    <changeSet id="v7-010-drop-tenants-table" author="savvy">
+        <dropTable tableName="tenants" cascadeConstraints="true"/>
+    </changeSet>
+
+    <changeSet id="v7-011-rename-widget-configs" author="savvy">
+        <renameTable oldTableName="widget_configs" newTableName="widget_config"/>
+    </changeSet>
+
+    <changeSet id="v7-012-create-app-config" author="savvy">
+        <createTable tableName="app_config">
+            <column name="id" type="BIGINT">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)" defaultValue="Моя организация">
+                <constraints nullable="false"/>
+            </column>
+            <column name="domain" type="VARCHAR(255)"/>
+            <column name="event_label" type="VARCHAR(255)" defaultValue="Событие">
+                <constraints nullable="false"/>
+            </column>
+            <column name="participant_label" type="VARCHAR(255)" defaultValue="Участник">
+                <constraints nullable="false"/>
+            </column>
+            <column name="booking_label" type="VARCHAR(255)" defaultValue="Бронирование">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <insert tableName="app_config">
+            <column name="id" valueNumeric="1"/>
+            <column name="name" value="Моя организация"/>
+            <column name="event_label" value="Событие"/>
+            <column name="participant_label" value="Участник"/>
+            <column name="booking_label" value="Бронирование"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>
