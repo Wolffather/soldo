@@ -73,15 +73,8 @@ public class WidgetServiceImpl implements WidgetService {
 
     @Override
     public List<WidgetEventResponse> getEvents(Long categoryId) {
-        if (categoryId != null) {
-            return eventRepository.findPublishedUpcomingByCategory(categoryId, LocalDate.now())
-                    .stream()
-                    .map(e -> toEventResponse(e, summaryRepository.findAvailableSeatsByEventId(e.getId())))
-                    .toList();
-        }
-        List<Long> categoryIds = eventRepository.findUpcomingCategoryIds(LocalDate.now());
-        return categoryIds.stream()
-                .flatMap(catId -> eventRepository.findPublishedUpcomingByCategory(catId, LocalDate.now()).stream())
+        return eventRepository.findWidgetEvents(LocalDate.now())
+                .stream()
                 .map(e -> toEventResponse(e, summaryRepository.findAvailableSeatsByEventId(e.getId())))
                 .toList();
     }
@@ -170,7 +163,7 @@ public class WidgetServiceImpl implements WidgetService {
                 .endDate(e.getEndDate())
                 .price(e.getPrice())
                 .availableSpots(availableSpots)
-                .categoryName(e.getCategory() != null ? e.getCategory().getName() : null)
+                .status(e.getStatus() != null ? e.getStatus().name() : null)
                 .build();
     }
 

@@ -44,4 +44,10 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     List<Event> findPublishedUpcomingByCategory(
             @Param("categoryId") Long categoryId,
             @Param("today") LocalDate today);
+
+    @Query("SELECT e FROM Event e " +
+           "WHERE e.status IN (ru.savvy.soldo.event.model.EventStatus.PUBLISHED, ru.savvy.soldo.event.model.EventStatus.DRAFT) " +
+           "AND (e.endDate IS NULL OR e.endDate >= :today) " +
+           "ORDER BY e.startDate ASC NULLS LAST")
+    List<Event> findWidgetEvents(@Param("today") LocalDate today);
 }

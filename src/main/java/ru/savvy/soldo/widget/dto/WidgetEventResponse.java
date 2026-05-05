@@ -21,5 +21,5 @@ public class WidgetEventResponse {
     private LocalDate endDate;
     private BigDecimal price;
     private Integer availableSpots;
-    private String categoryName;
+    private String status;
 }
