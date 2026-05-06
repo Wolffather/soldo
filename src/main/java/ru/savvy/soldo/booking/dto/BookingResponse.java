@@ -25,6 +25,7 @@ public class BookingResponse {
     private LocalDate paymentDeadline;
     private String createdAt;
     private boolean hasCertificate;
+    private String notes;
 
     /** Общее кол-во документов для бронирования (не архивных) */
     private int documentTotal;

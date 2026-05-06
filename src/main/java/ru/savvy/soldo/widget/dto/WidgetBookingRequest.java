@@ -1,5 +1,6 @@
 package ru.savvy.soldo.widget.dto;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -22,6 +23,8 @@ public class WidgetBookingRequest {
     @NotBlank
     private String guestPhone;
 
+    @NotBlank
+    @Email
     private String guestEmail;
 
     private String notes;

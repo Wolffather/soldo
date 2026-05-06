@@ -96,14 +96,14 @@ public class WidgetServiceImpl implements WidgetService {
                 .guestPhone(req.getGuestPhone())
                 .guestEmail(req.getGuestEmail())
                 .notes(req.getNotes())
-                .status(BookingStatus.PENDING)
+                .status(BookingStatus.CONFIRMED)
                 .paymentStatus(paymentStatus)
                 .amountDue(amountDue)
                 .paymentDeadline(paymentDeadline)
                 .build();
 
         booking = bookingRepository.save(booking);
-        summaryRepository.onCreatePending(event.getId());
+        summaryRepository.onCreateConfirmed(event.getId());
 
         String successMessage = widgetConfigRepository.findById(CONFIG_ID)
                 .map(WidgetConfig::getSuccessMessage)

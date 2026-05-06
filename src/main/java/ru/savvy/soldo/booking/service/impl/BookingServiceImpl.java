@@ -197,6 +197,7 @@ public class BookingServiceImpl implements BookingService {
                 .paymentDeadline(b.getPaymentDeadline())
                 .createdAt(b.getCreatedAt() != null ? b.getCreatedAt().toString() : null)
                 .hasCertificate(b.isHasCertificate())
+                .notes(b.getNotes())
                 .documentTotal(documentTotal)
                 .documentSigned(documentSigned)
                 .documentRequireSignature(documentRequireSignature)
