@@ -23,7 +23,6 @@ public class WidgetBookingRequest {
     @NotBlank
     private String guestPhone;
 
-    @NotBlank
     @Email
     private String guestEmail;
 

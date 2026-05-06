@@ -25,4 +25,5 @@ public class WidgetEventResponse {
     private Integer availableSpots;
     private String status;
     private List<EventPriceOptionDTO> priceOptions;
+    private boolean hasDocuments;
 }

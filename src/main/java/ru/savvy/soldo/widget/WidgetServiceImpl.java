@@ -1,6 +1,7 @@
 package ru.savvy.soldo.widget;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.savvy.soldo.booking.model.Booking;
@@ -13,6 +14,7 @@ import ru.savvy.soldo.event.dto.EventPriceOptionDTO;
 import ru.savvy.soldo.event.model.Event;
 import ru.savvy.soldo.event.model.EventPriceOption;
 import ru.savvy.soldo.event.model.EventStatus;
+import ru.savvy.soldo.document.repository.DocumentTemplateRepository;
 import ru.savvy.soldo.event.repository.EventPriceOptionRepository;
 import ru.savvy.soldo.event.repository.EventRepository;
 import ru.savvy.soldo.shared.exception.IllegalOperationException;
@@ -28,6 +30,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class WidgetServiceImpl implements WidgetService {
@@ -40,6 +43,7 @@ public class WidgetServiceImpl implements WidgetService {
     private final EventBookingSummaryRepository summaryRepository;
     private final BookingDocumentService bookingDocumentService;
     private final EventPriceOptionRepository priceOptionRepository;
+    private final DocumentTemplateRepository documentTemplateRepository;
 
     @Override
     @Transactional
@@ -71,7 +75,8 @@ public class WidgetServiceImpl implements WidgetService {
                 .stream()
                 .map(e -> toEventResponse(e,
                         summaryRepository.findAvailableSeatsByEventId(e.getId()),
-                        priceOptionRepository.findByEventIdOrderBySortOrderAscIdAsc(e.getId())))
+                        priceOptionRepository.findByEventIdOrderBySortOrderAscIdAsc(e.getId()),
+                        !documentTemplateRepository.findByEventId(e.getId()).isEmpty()))
                 .toList();
     }
 
@@ -121,7 +126,11 @@ public class WidgetServiceImpl implements WidgetService {
         summaryRepository.onCreateConfirmed(event.getId());
 
         bookingDocumentService.createDocumentsForBooking(booking);
-        bookingDocumentService.sendDocumentEmail(booking);
+        try {
+            bookingDocumentService.sendDocumentEmail(booking);
+        } catch (Exception e) {
+            log.warn("Failed to send document email for booking {}: {}", booking.getId(), e.getMessage());
+        }
 
         String successMessage = widgetConfigRepository.findById(CONFIG_ID)
                 .map(WidgetConfig::getSuccessMessage)
@@ -151,7 +160,7 @@ public class WidgetServiceImpl implements WidgetService {
                 .build();
     }
 
-    private WidgetEventResponse toEventResponse(Event e, Integer availableSpots, List<EventPriceOption> options) {
+    private WidgetEventResponse toEventResponse(Event e, Integer availableSpots, List<EventPriceOption> options, boolean hasDocuments) {
         List<EventPriceOptionDTO> optionDTOs = options.stream()
                 .map(o -> EventPriceOptionDTO.builder()
                         .id(o.getId())
@@ -169,6 +178,7 @@ public class WidgetServiceImpl implements WidgetService {
                 .availableSpots(availableSpots)
                 .status(e.getStatus() != null ? e.getStatus().name() : null)
                 .priceOptions(optionDTOs)
+                .hasDocuments(hasDocuments)
                 .build();
     }
 
