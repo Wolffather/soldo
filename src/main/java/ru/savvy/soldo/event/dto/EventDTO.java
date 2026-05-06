@@ -33,19 +33,10 @@ public class EventDTO {
     @Positive(message = "Цена должна быть положительной")
     private BigDecimal price;
 
-    /**
-     * Цена при наличии сертификата ПФДО. Только для событий SESSION_OUTDOOR. Необязательное.
-     */
-    private BigDecimal priceWithCertificate;
-
     @Positive(message = "Количество участников должно быть положительным")
     private Integer maxParticipants;
 
-    private Long categoryId;
-    private String categoryName;
-
     private String description;
-    private String gameMaster;
 
     private String status;
     private String createdAt;

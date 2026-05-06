@@ -8,10 +8,8 @@ import ru.savvy.soldo.shared.exception.NotFoundException;
 import ru.savvy.soldo.event.mapper.EventMapper;
 import ru.savvy.soldo.event.model.Event;
 import ru.savvy.soldo.booking.model.EventBookingsSummary;
-import ru.savvy.soldo.event.model.EventCategory;
 import ru.savvy.soldo.event.model.EventStatus;
 import ru.savvy.soldo.booking.repository.EventBookingSummaryRepository;
-import ru.savvy.soldo.event.repository.EventCategoryRepository;
 import ru.savvy.soldo.event.repository.EventRepository;
 import ru.savvy.soldo.event.service.EventService;
 
@@ -28,14 +26,12 @@ public class EventServiceImpl implements EventService {
 
     private final EventRepository eventRepository;
     private final EventBookingSummaryRepository summaryRepository;
-    private final EventCategoryRepository eventCategoryRepository;
     private final EventMapper mapper;
 
     @Override
     @Transactional
     public EventDTO create(EventDTO dto) {
         Event event = mapper.dtoToEntity(dto);
-        resolveCategory(dto, event);
 
         if (dto.getStatus() != null && !dto.getStatus().isBlank()) {
             event.setStatus(EventStatus.valueOf(dto.getStatus()));
@@ -64,14 +60,14 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional(readOnly = true)
     public Page<EventDTO> getAll(Pageable pageable) {
-        return eventRepository.findAllWithCategory(pageable)
+        return eventRepository.findAll(pageable)
                 .map(mapper::entityToDto);
     }
 
     @Override
     @Transactional(readOnly = true)
     public EventDTO getById(Long id) {
-        Event event = eventRepository.findByIdWithCategory(id)
+        Event event = eventRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Событие не найдено: " + id));
         return buildEventDto(event);
     }
@@ -79,11 +75,10 @@ public class EventServiceImpl implements EventService {
     @Override
     @Transactional
     public EventDTO update(Long id, EventDTO dto) {
-        Event event = eventRepository.findByIdWithCategory(id)
+        Event event = eventRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Событие не найдено: " + id));
 
         mapper.updateEntityFromDto(dto, event);
-        resolveCategory(dto, event);
 
         if (dto.getStatus() != null && !dto.getStatus().isBlank()) {
             event.setStatus(EventStatus.valueOf(dto.getStatus()));
@@ -109,19 +104,6 @@ public class EventServiceImpl implements EventService {
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────
-
-    private EventCategory resolveCategory(EventDTO dto, Event event) {
-        if (dto.getCategoryName() != null && !dto.getCategoryName().isBlank()) {
-            EventCategory category = eventCategoryRepository.findByName(dto.getCategoryName())
-                    .orElseThrow(() -> new NotFoundException(
-                            "Категория не найдена: " + dto.getCategoryName()));
-            event.setCategory(category);
-            return category;
-        } else {
-            event.setCategory(null);
-            return null;
-        }
-    }
 
     private EventDTO buildEventDto(Event event) {
         EventDTO dto = mapper.entityToDto(event);

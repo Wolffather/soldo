@@ -2,7 +2,6 @@ package ru.savvy.soldo.event.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import ru.savvy.soldo.event.model.EventStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -25,10 +24,6 @@ public class Event {
 
     private String description;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id")
-    private EventCategory category;
-
     @Column(name = "start_date")
     private LocalDate startDate;
 
@@ -38,20 +33,9 @@ public class Event {
     @Column(name = "max_participants")
     private Integer maxParticipants;
 
-    @Column(name = "game_master")
-    private String gameMaster;
-
     @Column(precision = 10, scale = 2)
     @Builder.Default
     private BigDecimal price = BigDecimal.ZERO;
-
-    /**
-     * Reduced price when the participant has a ПФДО certificate (государственный сертификат
-     * персонифицированного финансирования дополнительного образования).
-     * Applicable only for SESSION_OUTDOOR events. Null means not applicable.
-     */
-    @Column(name = "price_with_certificate", precision = 10, scale = 2)
-    private BigDecimal priceWithCertificate;
 
     @Enumerated(EnumType.STRING)
     @Builder.Default

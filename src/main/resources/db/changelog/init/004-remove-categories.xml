@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <changeSet id="004-remove-event-deprecated-columns" author="savvy">
+        <dropIndex tableName="events" indexName="idx_events_category_id"/>
+        <dropForeignKeyConstraint baseTableName="events" constraintName="fk_events_category"/>
+        <dropColumn tableName="events" columnName="category_id"/>
+        <dropColumn tableName="events" columnName="game_master"/>
+        <dropColumn tableName="events" columnName="price_with_certificate"/>
+        <rollback>
+            <addColumn tableName="events">
+                <column name="category_id" type="BIGINT"/>
+                <column name="game_master" type="VARCHAR(255)"/>
+                <column name="price_with_certificate" type="NUMERIC(10,2)"/>
+            </addColumn>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

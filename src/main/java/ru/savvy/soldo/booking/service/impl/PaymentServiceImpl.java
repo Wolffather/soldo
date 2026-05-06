@@ -26,7 +26,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Transactional
     public Booking processPaymentUpdate(Long id, PaymentUpdateRequest request) {
         Booking booking = EntityFinder.findOrThrow(
-                bookingRepository.findByIdWithCategory(id), "Бронирование не найдено: " + id);
+                bookingRepository.findById(id), "Бронирование не найдено: " + id);
 
         PaymentStatus newStatus = PaymentStatus.valueOf(request.getPaymentStatus());
         booking.setPaymentStatus(newStatus);

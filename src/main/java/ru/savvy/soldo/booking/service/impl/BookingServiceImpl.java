@@ -57,11 +57,6 @@ public class BookingServiceImpl implements BookingService {
         LocalDate paymentDeadline = null;
 
         BigDecimal effectivePrice = event.getPrice();
-        if (request.isHasCertificate()
-                && event.getPriceWithCertificate() != null
-                && event.getPriceWithCertificate().compareTo(BigDecimal.ZERO) > 0) {
-            effectivePrice = event.getPriceWithCertificate();
-        }
 
         if (effectivePrice != null && effectivePrice.compareTo(BigDecimal.ZERO) > 0) {
             paymentStatus = PaymentStatus.PENDING;
@@ -118,7 +113,7 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public BookingResponse confirm(Long id) {
-        Booking booking = EntityFinder.findOrThrow(bookingRepository.findByIdWithCategory(id), "Бронирование не найдено: " + id);
+        Booking booking = EntityFinder.findOrThrow(bookingRepository.findById(id), "Бронирование не найдено: " + id);
 
         if (!BookingStatus.PENDING.equals(booking.getStatus())) {
             throw new IllegalOperationException("Можно подтвердить только бронирование в статусе PENDING");
@@ -138,7 +133,7 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public BookingResponse cancel(Long id) {
-        Booking booking = EntityFinder.findOrThrow(bookingRepository.findByIdWithCategory(id), "Бронирование не найдено: " + id);
+        Booking booking = EntityFinder.findOrThrow(bookingRepository.findById(id), "Бронирование не найдено: " + id);
 
         if (BookingStatus.CANCELLED.equals(booking.getStatus())) {
             throw new IllegalOperationException("Бронирование уже отменено");
@@ -182,10 +177,6 @@ public class BookingServiceImpl implements BookingService {
     }
 
     private BookingResponse toResponse(Booking b) {
-        String categoryFormat = (b.getEvent().getCategory() != null)
-                ? b.getEvent().getCategory().getFormat().name()
-                : null;
-
         // Сводка по документам бронирования
         int documentTotal = bookingDocumentRepository.countActiveByBookingId(b.getId());
         int documentSigned = bookingDocumentRepository.countActiveSignedByBookingId(b.getId());
@@ -198,7 +189,7 @@ public class BookingServiceImpl implements BookingService {
                 .guestEmail(b.getGuestEmail())
                 .eventId(b.getEvent().getId())
                 .eventTitle(b.getEvent().getTitle())
-                .categoryFormat(categoryFormat)
+                .categoryFormat(null)
                 .status(String.valueOf(b.getStatus()))
                 .paymentStatus(b.getPaymentStatus() != null ? b.getPaymentStatus().name() : null)
                 .amountDue(b.getAmountDue())

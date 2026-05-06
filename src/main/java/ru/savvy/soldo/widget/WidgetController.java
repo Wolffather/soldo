@@ -29,11 +29,6 @@ public class WidgetController {
         return widgetService.updateConfig(req);
     }
 
-    @GetMapping("/categories")
-    public List<WidgetCategoryResponse> getCategories() {
-        return widgetService.getCategories();
-    }
-
     @GetMapping("/events")
     public List<WidgetEventResponse> getEvents(@RequestParam(required = false) Long categoryId) {
         return widgetService.getEvents(categoryId);

@@ -9,15 +9,12 @@ import ru.savvy.soldo.booking.model.PaymentStatus;
 import ru.savvy.soldo.booking.repository.BookingRepository;
 import ru.savvy.soldo.booking.repository.EventBookingSummaryRepository;
 import ru.savvy.soldo.event.model.Event;
-import ru.savvy.soldo.event.model.EventCategory;
 import ru.savvy.soldo.event.model.EventStatus;
-import ru.savvy.soldo.event.repository.EventCategoryRepository;
 import ru.savvy.soldo.event.repository.EventRepository;
 import ru.savvy.soldo.shared.exception.IllegalOperationException;
 import ru.savvy.soldo.shared.exception.NotFoundException;
 import ru.savvy.soldo.widget.dto.WidgetBookingRequest;
 import ru.savvy.soldo.widget.dto.WidgetBookingResponse;
-import ru.savvy.soldo.widget.dto.WidgetCategoryResponse;
 import ru.savvy.soldo.widget.dto.WidgetConfigResponse;
 import ru.savvy.soldo.widget.dto.WidgetConfigUpdateRequest;
 import ru.savvy.soldo.widget.dto.WidgetEventResponse;
@@ -34,7 +31,6 @@ public class WidgetServiceImpl implements WidgetService {
     private static final Long CONFIG_ID = 1L;
 
     private final WidgetConfigRepository widgetConfigRepository;
-    private final EventCategoryRepository eventCategoryRepository;
     private final EventRepository eventRepository;
     private final BookingRepository bookingRepository;
     private final EventBookingSummaryRepository summaryRepository;
@@ -64,14 +60,6 @@ public class WidgetServiceImpl implements WidgetService {
     }
 
     @Override
-    public List<WidgetCategoryResponse> getCategories() {
-        List<Long> activeCategoryIds = eventRepository.findUpcomingCategoryIds(LocalDate.now());
-        return eventCategoryRepository.findAllById(activeCategoryIds).stream()
-                .map(this::toCategoryResponse)
-                .toList();
-    }
-
-    @Override
     public List<WidgetEventResponse> getEvents(Long categoryId) {
         return eventRepository.findWidgetEvents(LocalDate.now())
                 .stream()
@@ -82,7 +70,7 @@ public class WidgetServiceImpl implements WidgetService {
     @Override
     @Transactional
     public WidgetBookingResponse createBooking(WidgetBookingRequest req) {
-        Event event = eventRepository.findByIdWithCategory(req.getEventId())
+        Event event = eventRepository.findById(req.getEventId())
                 .filter(e -> e.getStatus() == EventStatus.PUBLISHED)
                 .orElseThrow(() -> new NotFoundException("Событие не найдено или недоступно"));
 
@@ -142,15 +130,6 @@ public class WidgetServiceImpl implements WidgetService {
                 .customCss(config.getCustomCss())
                 .categoryStepTitle(config.getCategoryStepTitle())
                 .buttonLabel(config.getButtonLabel())
-                .build();
-    }
-
-    private WidgetCategoryResponse toCategoryResponse(EventCategory c) {
-        return WidgetCategoryResponse.builder()
-                .id(c.getId())
-                .name(c.getName())
-                .iconUrl(c.getIconUrl())
-                .format(c.getFormat() != null ? c.getFormat().name() : null)
                 .build();
     }
 

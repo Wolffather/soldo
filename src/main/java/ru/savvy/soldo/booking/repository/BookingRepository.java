@@ -10,16 +10,15 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
-    @Query("SELECT b FROM Booking b JOIN FETCH b.event e LEFT JOIN FETCH e.category WHERE b.event.id = :eventId")
+    @Query("SELECT b FROM Booking b JOIN FETCH b.event WHERE b.event.id = :eventId")
     List<Booking> findByEventId(@Param("eventId") Long eventId);
 
     List<Booking> findByEventIdAndStatus(Long eventId, BookingStatus status);
 
-    @Query("SELECT b FROM Booking b JOIN FETCH b.event e LEFT JOIN FETCH e.category " +
+    @Query("SELECT b FROM Booking b JOIN FETCH b.event " +
            "WHERE b.paymentStatus = 'PENDING' " +
            "AND b.paymentDeadline <= :deadline AND b.status = ru.savvy.soldo.booking.model.BookingStatus.CONFIRMED")
     List<Booking> findUnpaidWithDeadlineBefore(@Param("deadline") LocalDate deadline);
@@ -28,7 +27,4 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             "WHERE b.paymentStatus = ru.savvy.soldo.booking.model.PaymentStatus.PAID " +
             "AND b.paymentDate >= :startOfMonth")
     BigDecimal getMonthlyRevenue(@Param("startOfMonth") LocalDateTime startOfMonth);
-
-    @Query("SELECT b FROM Booking b JOIN FETCH b.event e LEFT JOIN FETCH e.category WHERE b.id = :id")
-    Optional<Booking> findByIdWithCategory(@Param("id") Long id);
 }
