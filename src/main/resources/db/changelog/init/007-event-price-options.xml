@@ -7,14 +7,14 @@
             http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
 
     <changeSet id="007-event-price-options" author="savvy">
-        <createTable tableName="event_price_options" schemaName="soldo_schema">
+        <createTable tableName="event_price_options">
             <column name="id" type="BIGINT" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="event_id" type="BIGINT">
                 <constraints nullable="false"
                              foreignKeyName="fk_price_option_event"
-                             references="soldo_schema.events(id)"/>
+                             references="events(id)"/>
             </column>
             <column name="name" type="VARCHAR(255)">
                 <constraints nullable="false"/>
@@ -27,11 +27,11 @@
             </column>
         </createTable>
 
-        <addColumn tableName="bookings" schemaName="soldo_schema">
+        <addColumn tableName="bookings">
             <column name="price_option_id" type="BIGINT">
                 <constraints nullable="true"
                              foreignKeyName="fk_booking_price_option"
-                             references="soldo_schema.event_price_options(id)"/>
+                             references="event_price_options(id)"/>
             </column>
         </addColumn>
     </changeSet>

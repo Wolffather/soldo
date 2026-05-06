@@ -6,7 +6,7 @@ import lombok.*;
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "event_price_options", schema = "soldo_schema")
+@Table(name = "event_price_options")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
