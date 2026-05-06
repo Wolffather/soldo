@@ -1,13 +1,13 @@
 # Soldo — Backend
 
-Сервис управления бронированиями для организаторов мероприятий. Multi-tenant SaaS с изоляцией данных на уровне `tenant_id`.
+REST API для системы управления событиями и бронированиями.
 
 ## Стек
 
 - **Java 21** / **Spring Boot 3.4.4**
 - **PostgreSQL 14** + **Liquibase** (миграции)
-- **Hibernate 6.6** с `@Filter` для мультитенантности
-- **Spring Security** + JWT
+- **Hibernate 6.6** / **Spring Data JPA**
+- **Spring Security** — все эндпоинты открыты (`permitAll`), защита на уровне сети
 - **MapStruct** + **Lombok**
 - **SpringDoc OpenAPI** (Swagger UI)
 
@@ -15,36 +15,27 @@
 
 | Пакет | Описание |
 |-------|----------|
-| `auth` | Аутентификация — JWT, логин/пароль, регистрация |
-| `tenant` | Мультитенантность, конфигурация, подписки |
-| `user` | Управление пользователями и профилями участников |
-| `event` | События, категории, форматы |
-| `booking` | Бронирования, статусы, сводка (counter-кэш) |
-| `document` | Шаблоны документов, электронная подпись |
-| `notification` | Уведомления с планировщиком |
-| `inquiry` | Обратная связь / заявки |
-| `widget` | Встраиваемый виджет бронирования |
-| `content` | Управление контентом (сайт, команда, галерея) |
-| `onboarding` | Онбординг новых тенантов |
+| `booking` | Бронирования, статусы оплаты, counter-кэш сводки, документы |
+| `config` | Настройки приложения (название, лейблы) |
+| `document` | Шаблоны документов, электронная подпись, загрузка файлов |
+| `event` | События (CRUD, статусы DRAFT/PUBLISHED) |
+| `user` | Профили участников |
+| `widget` | Встраиваемый виджет: конфиг, публичные события, бронирование |
+| `shared` | Spring Security, CORS, валидация, обработка ошибок |
 
 ## Конфигурация
 
-Вся конфигурация через переменные окружения. Файл `application.yaml` содержит дефолты для локальной разработки — для запуска на `localhost` достаточно поднять PostgreSQL с дефолтными кредами.
-
-| Переменная | По умолчанию | Описание |
-|-----------|-------------|----------|
-| `DB_URL` | `jdbc:postgresql://localhost:5432/soldo_db` | JDBC URL базы данных |
-| `DB_USERNAME` | `app_user` | Пользователь БД |
-| `DB_PASSWORD` | `app_pass` | Пароль БД |
-| `JWT_SECRET` | dev-заглушка | Секрет для подписи JWT (в проде — длинная случайная строка) |
-| `JWT_EXPIRATION_MS` | `86400000` (24ч) | Время жизни JWT |
-| `APP_PUBLIC_URL` | `http://localhost:8080` | Публичный URL приложения |
-| `UPLOAD_DIR` | `./uploads` | Директория загрузок |
-| `SWAGGER_ENABLED` | `true` | Включить Swagger UI |
-| `SWAGGER_USERNAME` | `admin` | Basic-auth для Swagger |
-| `SWAGGER_PASSWORD` | `admin` | Basic-auth для Swagger |
-| `LOG_LEVEL_APP` | `DEBUG` | Уровень логирования приложения |
-| `LOG_LEVEL_SQL` | `DEBUG` | Уровень логирования SQL |
+| Переменная | Описание |
+|-----------|----------|
+| `DB_URL` | JDBC URL базы данных (`jdbc:postgresql://localhost:5432/soldo_db`) |
+| `DB_USERNAME` | Пользователь БД (`app_user`) |
+| `DB_PASSWORD` | Пароль БД |
+| `APP_PUBLIC_URL` | Публичный URL приложения (`http://localhost:8080`) |
+| `UPLOAD_DIR` | Директория загрузок (`./uploads`) |
+| `CORS_ALLOWED_ORIGINS` | Список разрешённых origins для admin-panel и других клиентов |
+| `SWAGGER_ENABLED` | Включить Swagger UI (`true`) |
+| `SWAGGER_USERNAME` | Basic-auth для Swagger (`admin`) |
+| `SWAGGER_PASSWORD` | Basic-auth для Swagger |
 
 ## Быстрый старт (dev)
 
@@ -52,79 +43,117 @@
 # 1. Поднять PostgreSQL
 docker compose up -d
 
-# 2. Запустить приложение (дефолтов достаточно для localhost)
+# 2. Запустить приложение
 ./mvnw spring-boot:run
 ```
 
-Если нужны нестандартные значения — передайте через env:
-```bash
-DB_URL=jdbc:postgresql://myhost:5432/mydb DB_USERNAME=me DB_PASSWORD=secret ./mvnw spring-boot:run
-```
-
-API будет доступно на `http://localhost:8080`.  
-Swagger UI: `http://localhost:8080/swagger-ui/index.html`.
+API: `http://localhost:8080`  
+Swagger UI: `http://localhost:8080/swagger-ui/index.html`
 
 ## Миграции БД
 
-Используется Liquibase. Мастер-файл: `src/main/resources/db/changelog/db.changelog-master.xml`.
-
-Миграции применяются автоматически при старте приложения. Структура:
+Liquibase, применяются автоматически при старте. Мастер-файл: `src/main/resources/db/changelog/db.changelog-master.xml`.
 
 ```
 db/changelog/
-├── db.changelog-master.xml          # точка входа
+├── db.changelog-master.xml
 └── init/
-    ├── 001-init-schema.xml          # все таблицы
-    └── 002-booking-summary-functions.sql  # PL/pgSQL функции счётчиков
+    ├── 001-init-schema.xml               # все таблицы
+    ├── 002-booking-summary-functions.sql # PL/pgSQL counter-кэш
+    ├── 003-remove-multitenancy.xml       # удаление мультитенантности
+    └── 004-remove-categories.xml         # удаление категорий событий
 ```
 
-## Архитектура мультитенантности
+## API
 
-Shared database, shared schema. Все сущности содержат `tenant_id`. Изоляция через Hibernate `@Filter("tenantFilter")`, который устанавливается автоматически через `TenantContext`.
+### Публичные (без авторизации)
 
-Глобальные сущности без `tenant_id`: `SiteSettings`, `TeamMember`, `GalleryItem`.
+| Метод | Путь | Описание |
+|-------|------|----------|
+| `GET` | `/public/widget/config` | Конфигурация виджета (цвета, шрифты, лейблы) |
+| `GET` | `/public/widget/events` | Опубликованные предстоящие события |
+| `POST` | `/public/widget/booking` | Создать бронирование через виджет |
+
+При бронировании через виджет требуются: имя (`guestName`), телефон (`guestPhone`), email (`guestEmail`). Бронирование автоматически получает статус `CONFIRMED`.
+
+### Административные
+
+| Метод | Путь | Описание |
+|-------|------|----------|
+| `GET/POST/PUT/DELETE` | `/events/**` | CRUD событий |
+| `GET` | `/bookings/event/{id}` | Список бронирований события |
+| `GET` | `/bookings/summary` | Сводка по всем событиям |
+| `GET` | `/bookings/event/{id}/summary` | Сводка по конкретному событию |
+| `POST` | `/bookings/admin` | Создать бронирование вручную |
+| `PATCH` | `/bookings/{id}/cancel` | Отменить бронирование |
+| `PATCH` | `/bookings/{id}/payment` | Обновить статус оплаты |
+| `GET` | `/bookings/stats/monthly-revenue` | Выручка за текущий месяц |
+| `GET/POST/PUT/DELETE` | `/admin/documents/**` | Шаблоны документов |
+| `GET` | `/admin/bookings/{id}/documents` | Документы бронирования |
+| `GET/PUT` | `/admin/widget/**` | Настройки виджета (admin) |
+
+### Статусы бронирования
+
+| Статус | Описание |
+|--------|----------|
+| `CONFIRMED` | Активное бронирование (присваивается автоматически при создании) |
+| `CANCELLED` | Отменено (освобождает место) |
+
+### Статусы оплаты
+
+| Статус | Описание |
+|--------|----------|
+| `NOT_REQUIRED` | Событие бесплатное |
+| `PENDING` | Ожидает оплаты |
+| `PARTIALLY_PAID` | Внесена частичная оплата |
+| `PAID` | Оплачено полностью |
+| `REFUNDED` | Возврат |
+
+## Структура проекта
+
+```
+src/main/java/ru/savvy/soldo/
+├── booking/
+│   ├── controller/     # BookingController, AdminDocumentController
+│   ├── dto/            # BookingResponse, AdminBookingRequest, PaymentUpdateRequest, ...
+│   ├── model/          # Booking, BookingDocument, EventBookingsSummary, BookingStatus, PaymentStatus
+│   ├── repository/     # BookingRepository, BookingDocumentRepository, EventBookingSummaryRepository
+│   └── service/        # BookingService, PaymentService, BookingDocumentService
+├── config/             # AppConfig — настройки приложения (название, лейблы)
+├── document/
+│   ├── controller/     # DocumentTemplateController, FileUploadController, FileServeController
+│   ├── model/          # DocumentTemplate
+│   └── service/        # DocumentTemplateService, FileStorageService
+├── event/
+│   ├── controller/     # EventController
+│   ├── dto/            # EventDTO
+│   ├── mapper/         # EventMapper (MapStruct)
+│   ├── model/          # Event, EventStatus
+│   └── service/        # EventService
+├── user/
+│   ├── controller/     # ParticipantProfileController
+│   ├── model/          # User, ParticipantProfile, UserRole
+│   └── service/        # ParticipantProfileService
+├── widget/
+│   ├── WidgetController.java        # GET /public/widget/**
+│   ├── AdminWidgetController.java   # GET/PUT /admin/widget/**
+│   ├── dto/            # WidgetBookingRequest, WidgetBookingResponse, WidgetConfigResponse, ...
+│   └── model/          # WidgetConfig
+└── shared/
+    ├── config/         # SecurityConfig (permitAll), OpenApiConfig
+    ├── exception/      # GlobalExceptionHandler, NotFoundException, ...
+    └── annotation/     # @ValidDateOrder
+```
+
+## Counter-кэш бронирований
+
+Таблица `event_bookings_summary` хранит счётчики мест в реальном времени. Обновляется через PL/pgSQL-функции (`onCreateConfirmed`, `onCancelFromConfirmed`, ...), которые вызываются из `EventBookingSummaryRepository` после каждого изменения статуса бронирования. Такой подход исключает `SELECT COUNT(*)` при каждом запросе списка событий.
 
 ## Production
-
-См. [DEPLOYMENT.md](../DEPLOYMENT.md) в корне проекта — инструкция по развёртыванию на VPS (Docker + Caddy + auto-TLS).
 
 ```bash
 # Из корня проекта
 cp .env.example .env
 # Заполнить .env
 docker compose -f docker-compose.prod.yml --env-file .env up -d --build
-```
-
-## API
-
-Основные группы эндпоинтов:
-
-| Путь | Описание |
-|------|----------|
-| `POST /auth/login` | Аутентификация, получение JWT |
-| `POST /auth/register` | Регистрация пользователя |
-| `/admin/events/**` | CRUD событий |
-| `/admin/bookings/**` | CRUD бронирований |
-| `/admin/users/**` | Управление пользователями |
-| `/admin/tenant/**` | Настройки тенанта |
-| `/admin/documents/**` | Шаблоны и документы |
-| `/admin/notifications/**` | Уведомления |
-| `/public/widget/**` | Публичный виджет (без авторизации) |
-
-## Структура проекта
-
-```
-src/main/java/ru/savvy/soldo/
-├── auth/           # Контроллеры, DTO, модели аутентификации
-├── booking/        # Бронирования, документы, сводка
-├── content/        # Контент сайта
-├── document/       # Документы и шаблоны
-├── event/          # События и категории
-├── inquiry/        # Обратная связь
-├── notification/   # Уведомления и планировщик
-├── onboarding/     # Онбординг
-├── tenant/         # Мультитенантность
-├── user/           # Пользователи и профили
-├── widget/         # Виджет бронирования
-└── shared/         # Конфигурация, безопасность, утилиты
 ```
