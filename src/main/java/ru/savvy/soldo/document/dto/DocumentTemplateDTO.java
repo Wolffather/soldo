@@ -15,10 +15,8 @@ public class DocumentTemplateDTO {
 
     private String description;
     private String fileUrl;
-
-    @NotBlank(message = "Формат категории обязателен")
+    private Long eventId;
     private String categoryFormat;
-
     private Boolean isRequired;
     private Boolean requiresSignature;
     private String createdAt;

@@ -35,4 +35,7 @@ public class BookingDocumentResponse {
 
     /** Требует ли шаблон электронной подписи (true) или только ознакомления (false) */
     private Boolean templateRequiresSignature;
+
+    /** Дата и время отправки письма с документами участнику (null — ещё не отправлено) */
+    private LocalDateTime emailSentAt;
 }

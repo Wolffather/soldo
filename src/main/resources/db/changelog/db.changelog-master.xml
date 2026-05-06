@@ -26,5 +26,8 @@
     <include file="db/changelog/init/002-booking-summary-functions.sql"/>
     <include file="db/changelog/init/003-remove-multitenancy.xml"/>
     <include file="db/changelog/init/004-remove-categories.xml"/>
+    <include file="db/changelog/init/005-document-email.xml"/>
+    <include file="db/changelog/init/006-app-settings.xml"/>
+    <include file="db/changelog/init/007-event-price-options.xml"/>
 
 </databaseChangeLog>

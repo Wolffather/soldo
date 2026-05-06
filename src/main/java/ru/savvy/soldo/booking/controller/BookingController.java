@@ -65,4 +65,10 @@ public class BookingController {
             @Valid @RequestBody PaymentUpdateRequest request) {
         return ResponseEntity.ok(bookingService.updatePayment(id, request));
     }
+
+    /** Sends (or re-sends) document email for a booking. */
+    @PostMapping("/{id}/send-documents")
+    public ResponseEntity<BookingResponse> sendDocuments(@PathVariable Long id) {
+        return ResponseEntity.ok(bookingService.sendDocuments(id));
+    }
 }

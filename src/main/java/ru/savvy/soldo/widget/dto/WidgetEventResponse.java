@@ -4,9 +4,11 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import ru.savvy.soldo.event.dto.EventPriceOptionDTO;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -22,4 +24,5 @@ public class WidgetEventResponse {
     private BigDecimal price;
     private Integer availableSpots;
     private String status;
+    private List<EventPriceOptionDTO> priceOptions;
 }

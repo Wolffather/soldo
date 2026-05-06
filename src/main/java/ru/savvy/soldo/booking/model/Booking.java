@@ -5,6 +5,7 @@ import lombok.*;
 import ru.savvy.soldo.booking.model.BookingStatus;
 import ru.savvy.soldo.booking.model.PaymentStatus;
 import ru.savvy.soldo.event.model.Event;
+import ru.savvy.soldo.event.model.EventPriceOption;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -59,6 +60,10 @@ public class Booking {
 
     @Column(name = "payment_date")
     private LocalDateTime paymentDate;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "price_option_id")
+    private EventPriceOption priceOption;
 
     private String notes;
 

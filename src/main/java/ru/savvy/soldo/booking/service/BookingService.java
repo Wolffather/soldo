@@ -26,4 +26,7 @@ public interface BookingService {
     BookingResponse updatePayment(Long id, PaymentUpdateRequest request);
 
     BigDecimal getMonthlyRevenue();
+
+    /** Sends (or re-sends) document email for a booking. Returns updated booking. */
+    BookingResponse sendDocuments(Long id);
 }

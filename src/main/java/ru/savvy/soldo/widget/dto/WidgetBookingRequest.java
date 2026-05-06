@@ -28,4 +28,7 @@ public class WidgetBookingRequest {
     private String guestEmail;
 
     private String notes;
+
+    /** ID выбранной опции оплаты */
+    private Long priceOptionId;
 }

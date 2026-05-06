@@ -26,6 +26,8 @@ public class BookingResponse {
     private String createdAt;
     private boolean hasCertificate;
     private String notes;
+    private Long priceOptionId;
+    private String priceOptionName;
 
     /** Общее кол-во документов для бронирования (не архивных) */
     private int documentTotal;

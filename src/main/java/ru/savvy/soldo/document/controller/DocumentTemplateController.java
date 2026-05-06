@@ -19,7 +19,11 @@ public class DocumentTemplateController {
 
     @GetMapping
     public ResponseEntity<List<DocumentTemplateDTO>> getAll(
-            @RequestParam(required = false) String format) {
+            @RequestParam(required = false) String format,
+            @RequestParam(required = false) Long eventId) {
+        if (eventId != null) {
+            return ResponseEntity.ok(service.getByEventId(eventId));
+        }
         return ResponseEntity.ok(service.getAll(format));
     }
 

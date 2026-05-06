@@ -52,6 +52,10 @@ public class BookingDocument {
     @Column(name = "filled_data", columnDefinition = "TEXT")
     private String filledData;
 
+    /** Дата и время отправки письма с документами участнику */
+    @Column(name = "email_sent_at")
+    private LocalDateTime emailSentAt;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

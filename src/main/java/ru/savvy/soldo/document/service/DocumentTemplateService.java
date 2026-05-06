@@ -8,6 +8,8 @@ public interface DocumentTemplateService {
 
     List<DocumentTemplateDTO> getAll(String categoryFormat);
 
+    List<DocumentTemplateDTO> getByEventId(Long eventId);
+
     DocumentTemplateDTO getById(Long id);
 
     DocumentTemplateDTO create(DocumentTemplateDTO dto);

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="005-document-templates-add-event-id" author="savvy">
+        <!-- Link document templates to a specific event -->
+        <addColumn tableName="document_templates">
+            <column name="event_id" type="BIGINT">
+                <constraints nullable="true"
+                             foreignKeyName="fk_doc_template_event"
+                             references="events(id)"
+                             deleteCascade="true"/>
+            </column>
+        </addColumn>
+        <!-- category_format was NOT NULL but is now unused; make nullable -->
+        <dropNotNullConstraint tableName="document_templates" columnName="category_format"
+                               columnDataType="VARCHAR(255)"/>
+    </changeSet>
+
+    <changeSet id="005-booking-documents-add-email-sent-at" author="savvy">
+        <!-- Track when the document email was sent for this booking document -->
+        <addColumn tableName="booking_documents">
+            <column name="email_sent_at" type="TIMESTAMP"/>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

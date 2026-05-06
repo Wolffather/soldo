@@ -67,3 +67,20 @@ swagger:
 app:
   upload-dir: ${UPLOAD_DIR:./uploads}
   public-url: ${APP_PUBLIC_URL:http://localhost:8080}
+  mail:
+    enabled: ${MAIL_ENABLED:false}
+    from: ${MAIL_FROM:noreply@example.com}
+
+spring:
+  mail:
+    host: ${MAIL_HOST:smtp.yandex.ru}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true

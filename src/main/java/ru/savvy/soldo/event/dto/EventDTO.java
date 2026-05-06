@@ -11,6 +11,7 @@ import ru.savvy.soldo.shared.annotation.ValidDateOrder;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
 @Builder
@@ -46,4 +47,7 @@ public class EventDTO {
      * Computed from EventBookingsSummary.numOfParticipants.
      */
     private Integer availableSpots;
+
+    /** Опции оплаты (не маппятся автоматически — загружаются отдельно в сервисе) */
+    private List<EventPriceOptionDTO> priceOptions;
 }

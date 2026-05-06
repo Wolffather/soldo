@@ -28,4 +28,7 @@ public class AdminBookingRequest {
 
     /** Примечание администратора */
     private String notes;
+
+    /** ID выбранной опции оплаты (если у события несколько вариантов) */
+    private Long priceOptionId;
 }

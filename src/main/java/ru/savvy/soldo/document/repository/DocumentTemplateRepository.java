@@ -8,4 +8,6 @@ import java.util.List;
 public interface DocumentTemplateRepository extends JpaRepository<DocumentTemplate, Long> {
 
     List<DocumentTemplate> findByCategoryFormat(String categoryFormat);
+
+    List<DocumentTemplate> findByEventId(Long eventId);
 }

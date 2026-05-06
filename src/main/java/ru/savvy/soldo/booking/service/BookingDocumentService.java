@@ -7,21 +7,15 @@ import java.util.List;
 
 public interface BookingDocumentService {
 
-    /**
-     * Creates document stubs (based on templates) for a booking.
-     *
-     * @param booking        the newly created booking
-     * @param categoryFormat the format name of the event category
-     */
-    void createDocumentsForBooking(Booking booking, String categoryFormat);
+    /** Creates document stubs for a new booking based on templates linked to its event. */
+    void createDocumentsForBooking(Booking booking);
 
-    /**
-     * Archives all documents for a booking (called when booking is cancelled).
-     */
+    /** Sends (or re-sends) document email for a booking. Updates emailSentAt on all documents. */
+    void sendDocumentEmail(Booking booking);
+
+    /** Archives all documents for a booking (called when booking is cancelled). */
     void archiveDocumentsForBooking(Long bookingId);
 
-    /**
-     * Returns all documents for a specific booking (including archived). For admin use.
-     */
+    /** Returns all documents for a specific booking (including archived). For admin use. */
     List<BookingDocumentResponse> getForBooking(Long bookingId);
 }

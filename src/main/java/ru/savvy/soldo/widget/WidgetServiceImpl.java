@@ -8,8 +8,12 @@ import ru.savvy.soldo.booking.model.BookingStatus;
 import ru.savvy.soldo.booking.model.PaymentStatus;
 import ru.savvy.soldo.booking.repository.BookingRepository;
 import ru.savvy.soldo.booking.repository.EventBookingSummaryRepository;
+import ru.savvy.soldo.booking.service.BookingDocumentService;
+import ru.savvy.soldo.event.dto.EventPriceOptionDTO;
 import ru.savvy.soldo.event.model.Event;
+import ru.savvy.soldo.event.model.EventPriceOption;
 import ru.savvy.soldo.event.model.EventStatus;
+import ru.savvy.soldo.event.repository.EventPriceOptionRepository;
 import ru.savvy.soldo.event.repository.EventRepository;
 import ru.savvy.soldo.shared.exception.IllegalOperationException;
 import ru.savvy.soldo.shared.exception.NotFoundException;
@@ -34,6 +38,8 @@ public class WidgetServiceImpl implements WidgetService {
     private final EventRepository eventRepository;
     private final BookingRepository bookingRepository;
     private final EventBookingSummaryRepository summaryRepository;
+    private final BookingDocumentService bookingDocumentService;
+    private final EventPriceOptionRepository priceOptionRepository;
 
     @Override
     @Transactional
@@ -63,7 +69,9 @@ public class WidgetServiceImpl implements WidgetService {
     public List<WidgetEventResponse> getEvents(Long categoryId) {
         return eventRepository.findWidgetEvents(LocalDate.now())
                 .stream()
-                .map(e -> toEventResponse(e, summaryRepository.findAvailableSeatsByEventId(e.getId())))
+                .map(e -> toEventResponse(e,
+                        summaryRepository.findAvailableSeatsByEventId(e.getId()),
+                        priceOptionRepository.findByEventIdOrderBySortOrderAscIdAsc(e.getId())))
                 .toList();
     }
 
@@ -80,12 +88,18 @@ public class WidgetServiceImpl implements WidgetService {
             }
         });
 
+        EventPriceOption priceOption = null;
+        if (req.getPriceOptionId() != null) {
+            priceOption = priceOptionRepository.findById(req.getPriceOptionId()).orElse(null);
+        }
+
         BigDecimal amountDue = BigDecimal.ZERO;
         PaymentStatus paymentStatus = PaymentStatus.NOT_REQUIRED;
         LocalDate paymentDeadline = null;
 
-        if (event.getPrice() != null && event.getPrice().compareTo(BigDecimal.ZERO) > 0) {
-            amountDue = event.getPrice();
+        BigDecimal effectivePrice = priceOption != null ? priceOption.getPrice() : event.getPrice();
+        if (effectivePrice != null && effectivePrice.compareTo(BigDecimal.ZERO) > 0) {
+            amountDue = effectivePrice;
             paymentStatus = PaymentStatus.PENDING;
             paymentDeadline = LocalDate.now().plusDays(7);
         }
@@ -100,10 +114,14 @@ public class WidgetServiceImpl implements WidgetService {
                 .paymentStatus(paymentStatus)
                 .amountDue(amountDue)
                 .paymentDeadline(paymentDeadline)
+                .priceOption(priceOption)
                 .build();
 
         booking = bookingRepository.save(booking);
         summaryRepository.onCreateConfirmed(event.getId());
+
+        bookingDocumentService.createDocumentsForBooking(booking);
+        bookingDocumentService.sendDocumentEmail(booking);
 
         String successMessage = widgetConfigRepository.findById(CONFIG_ID)
                 .map(WidgetConfig::getSuccessMessage)
@@ -133,7 +151,14 @@ public class WidgetServiceImpl implements WidgetService {
                 .build();
     }
 
-    private WidgetEventResponse toEventResponse(Event e, Integer availableSpots) {
+    private WidgetEventResponse toEventResponse(Event e, Integer availableSpots, List<EventPriceOption> options) {
+        List<EventPriceOptionDTO> optionDTOs = options.stream()
+                .map(o -> EventPriceOptionDTO.builder()
+                        .id(o.getId())
+                        .name(o.getName())
+                        .price(o.getPrice())
+                        .build())
+                .toList();
         return WidgetEventResponse.builder()
                 .id(e.getId())
                 .title(e.getTitle())
@@ -143,6 +168,7 @@ public class WidgetServiceImpl implements WidgetService {
                 .price(e.getPrice())
                 .availableSpots(availableSpots)
                 .status(e.getStatus() != null ? e.getStatus().name() : null)
+                .priceOptions(optionDTOs)
                 .build();
     }
 

@@ -4,12 +4,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.savvy.soldo.event.dto.EventDTO;
+import ru.savvy.soldo.event.dto.EventPriceOptionDTO;
 import ru.savvy.soldo.shared.exception.NotFoundException;
 import ru.savvy.soldo.event.mapper.EventMapper;
 import ru.savvy.soldo.event.model.Event;
+import ru.savvy.soldo.event.model.EventPriceOption;
 import ru.savvy.soldo.booking.model.EventBookingsSummary;
 import ru.savvy.soldo.event.model.EventStatus;
 import ru.savvy.soldo.booking.repository.EventBookingSummaryRepository;
+import ru.savvy.soldo.event.repository.EventPriceOptionRepository;
 import ru.savvy.soldo.event.repository.EventRepository;
 import ru.savvy.soldo.event.service.EventService;
 
@@ -26,6 +29,7 @@ public class EventServiceImpl implements EventService {
 
     private final EventRepository eventRepository;
     private final EventBookingSummaryRepository summaryRepository;
+    private final EventPriceOptionRepository priceOptionRepository;
     private final EventMapper mapper;
 
     @Override
@@ -40,12 +44,13 @@ public class EventServiceImpl implements EventService {
         }
 
         event = eventRepository.save(event);
+        savePriceOptions(event, dto.getPriceOptions());
 
         if (event.getMaxParticipants() != null) {
             createSummary(event);
         }
 
-        return mapper.entityToDto(event);
+        return buildEventDto(event);
     }
 
     @Override
@@ -61,7 +66,7 @@ public class EventServiceImpl implements EventService {
     @Transactional(readOnly = true)
     public Page<EventDTO> getAll(Pageable pageable) {
         return eventRepository.findAll(pageable)
-                .map(mapper::entityToDto);
+                .map(this::buildEventDto);
     }
 
     @Override
@@ -85,6 +90,7 @@ public class EventServiceImpl implements EventService {
         }
 
         event = eventRepository.save(event);
+        savePriceOptions(event, dto.getPriceOptions());
 
         if (event.getMaxParticipants() != null) {
             updateSummary(event);
@@ -100,10 +106,26 @@ public class EventServiceImpl implements EventService {
             throw new NotFoundException("Событие не найдено: " + id);
         }
         summaryRepository.findByEventId(id).ifPresent(summaryRepository::delete);
+        priceOptionRepository.deleteByEventId(id);
         eventRepository.deleteById(id);
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────
+
+    private void savePriceOptions(Event event, List<EventPriceOptionDTO> options) {
+        if (options == null) return;
+        priceOptionRepository.deleteByEventId(event.getId());
+        for (int i = 0; i < options.size(); i++) {
+            EventPriceOptionDTO opt = options.get(i);
+            if (opt.getName() == null || opt.getName().isBlank() || opt.getPrice() == null) continue;
+            priceOptionRepository.save(EventPriceOption.builder()
+                    .event(event)
+                    .name(opt.getName().trim())
+                    .price(opt.getPrice())
+                    .sortOrder(i)
+                    .build());
+        }
+    }
 
     private EventDTO buildEventDto(Event event) {
         EventDTO dto = mapper.entityToDto(event);
@@ -112,6 +134,16 @@ public class EventServiceImpl implements EventService {
             summaryRepository.findByEventId(event.getId())
                     .ifPresent(s -> dto.setAvailableSpots(s.getNumOfParticipants()));
         }
+
+        List<EventPriceOption> options = priceOptionRepository
+                .findByEventIdOrderBySortOrderAscIdAsc(event.getId());
+        dto.setPriceOptions(options.stream()
+                .map(o -> EventPriceOptionDTO.builder()
+                        .id(o.getId())
+                        .name(o.getName())
+                        .price(o.getPrice())
+                        .build())
+                .toList());
 
         return dto;
     }

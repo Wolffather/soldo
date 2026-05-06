@@ -23,6 +23,8 @@ import ru.savvy.soldo.event.repository.EventRepository;
 import ru.savvy.soldo.booking.service.BookingDocumentService;
 import ru.savvy.soldo.booking.service.BookingService;
 import ru.savvy.soldo.booking.service.PaymentService;
+import ru.savvy.soldo.event.model.EventPriceOption;
+import ru.savvy.soldo.event.repository.EventPriceOptionRepository;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -39,6 +41,7 @@ public class BookingServiceImpl implements BookingService {
     private final PaymentService paymentService;
     private final BookingDocumentService bookingDocumentService;
     private final BookingDocumentRepository bookingDocumentRepository;
+    private final EventPriceOptionRepository priceOptionRepository;
 
     @Override
     @Transactional
@@ -56,7 +59,12 @@ public class BookingServiceImpl implements BookingService {
         BigDecimal amountDue = BigDecimal.ZERO;
         LocalDate paymentDeadline = null;
 
-        BigDecimal effectivePrice = event.getPrice();
+        EventPriceOption priceOption = null;
+        if (request.getPriceOptionId() != null) {
+            priceOption = priceOptionRepository.findById(request.getPriceOptionId()).orElse(null);
+        }
+
+        BigDecimal effectivePrice = priceOption != null ? priceOption.getPrice() : event.getPrice();
 
         if (effectivePrice != null && effectivePrice.compareTo(BigDecimal.ZERO) > 0) {
             paymentStatus = PaymentStatus.PENDING;
@@ -77,6 +85,7 @@ public class BookingServiceImpl implements BookingService {
                 .paymentDeadline(paymentDeadline)
                 .hasCertificate(request.isHasCertificate())
                 .notes(request.getNotes())
+                .priceOption(priceOption)
                 .build();
 
         booking = bookingRepository.save(booking);
@@ -84,6 +93,11 @@ public class BookingServiceImpl implements BookingService {
         switch (status) {
             case BookingStatus.PENDING   -> summaryRepository.onCreatePending(event.getId());
             case BookingStatus.CONFIRMED -> summaryRepository.onCreateConfirmed(event.getId());
+        }
+
+        bookingDocumentService.createDocumentsForBooking(booking);
+        if (booking.getGuestEmail() != null && !booking.getGuestEmail().isBlank()) {
+            bookingDocumentService.sendDocumentEmail(booking);
         }
 
         return toResponse(booking);
@@ -172,8 +186,16 @@ public class BookingServiceImpl implements BookingService {
         return paymentService.getMonthlyRevenue();
     }
 
+    @Override
+    @Transactional
+    public BookingResponse sendDocuments(Long id) {
+        Booking booking = EntityFinder.findOrThrow(bookingRepository.findById(id), "Бронирование не найдено: " + id);
+        bookingDocumentService.sendDocumentEmail(booking);
+        return toResponse(booking);
+    }
+
     private void notifyBooker(Booking booking, String message) {
-        // Notification channel (email/sms) to be implemented
+        // SMS/push notifications — to be implemented
     }
 
     private BookingResponse toResponse(Booking b) {
@@ -198,6 +220,8 @@ public class BookingServiceImpl implements BookingService {
                 .createdAt(b.getCreatedAt() != null ? b.getCreatedAt().toString() : null)
                 .hasCertificate(b.isHasCertificate())
                 .notes(b.getNotes())
+                .priceOptionId(b.getPriceOption() != null ? b.getPriceOption().getId() : null)
+                .priceOptionName(b.getPriceOption() != null ? b.getPriceOption().getName() : null)
                 .documentTotal(documentTotal)
                 .documentSigned(documentSigned)
                 .documentRequireSignature(documentRequireSignature)

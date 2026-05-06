@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <changeSet id="006-app-settings" author="savvy">
+        <createTable tableName="app_settings" schemaName="soldo_schema">
+            <column name="key" type="VARCHAR(255)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="value" type="TEXT"/>
+        </createTable>
+
+        <insert tableName="app_settings" schemaName="soldo_schema">
+            <column name="key" value="mail.enabled"/>
+            <column name="value" value="false"/>
+        </insert>
+        <insert tableName="app_settings" schemaName="soldo_schema">
+            <column name="key" value="mail.from"/>
+            <column name="value" value="noreply@example.com"/>
+        </insert>
+        <insert tableName="app_settings" schemaName="soldo_schema">
+            <column name="key" value="mail.host"/>
+            <column name="value" value="smtp.gmail.com"/>
+        </insert>
+        <insert tableName="app_settings" schemaName="soldo_schema">
+            <column name="key" value="mail.port"/>
+            <column name="value" value="587"/>
+        </insert>
+        <insert tableName="app_settings" schemaName="soldo_schema">
+            <column name="key" value="mail.username"/>
+            <column name="value" value=""/>
+        </insert>
+        <insert tableName="app_settings" schemaName="soldo_schema">
+            <column name="key" value="mail.password"/>
+            <column name="value" value=""/>
+        </insert>
+        <insert tableName="app_settings" schemaName="soldo_schema">
+            <column name="key" value="app.public-url"/>
+            <column name="value" value="http://localhost:8080"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

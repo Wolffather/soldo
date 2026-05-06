@@ -12,6 +12,7 @@ public interface EventMapper {
     @Mapping(target = "id", source = "id")
     // availableSpots is computed in EventService, not mapped here
     @Mapping(target = "availableSpots", ignore = true)
+    @Mapping(target = "priceOptions", ignore = true)
     EventDTO entityToDto(Event event);
 
     @Mapping(target = "id", ignore = true)

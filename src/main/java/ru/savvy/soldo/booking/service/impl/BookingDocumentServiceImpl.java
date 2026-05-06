@@ -11,7 +11,9 @@ import ru.savvy.soldo.booking.repository.BookingDocumentRepository;
 import ru.savvy.soldo.document.model.DocumentTemplate;
 import ru.savvy.soldo.document.repository.DocumentTemplateRepository;
 import ru.savvy.soldo.booking.service.BookingDocumentService;
+import ru.savvy.soldo.shared.email.EmailService;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -21,33 +23,35 @@ public class BookingDocumentServiceImpl implements BookingDocumentService {
 
     private final DocumentTemplateRepository documentTemplateRepository;
     private final BookingDocumentRepository bookingDocumentRepository;
+    private final EmailService emailService;
 
     @Override
-    public void createDocumentsForBooking(Booking booking, String categoryFormat) {
-        // Не создаём дубликаты — если уже есть документы для этого бронирования, пропускаем
-        List<BookingDocument> existing = bookingDocumentRepository.findByBookingId(booking.getId());
-        if (!existing.isEmpty()) return;
-
-        List<DocumentTemplate> templates = documentTemplateRepository.findByCategoryFormat(categoryFormat);
-        List<BookingDocument> docs = templates.stream()
-                .map(template -> {
-                    BookingDocument doc = new BookingDocument();
-                    doc.setBooking(booking);
-                    doc.setDocumentTemplate(template);
-                    return doc;
-                })
-                .toList();
-        bookingDocumentRepository.saveAll(docs);
-        log.info("Создано {} документов для бронирования {}", docs.size(), booking.getId());
+    @Transactional
+    public void createDocumentsForBooking(Booking booking) {
+        if (bookingDocumentRepository.findByBookingId(booking.getId()).isEmpty()) {
+            Long eventId = booking.getEvent().getId();
+            List<DocumentTemplate> templates = documentTemplateRepository.findByEventId(eventId);
+            if (!templates.isEmpty()) {
+                List<BookingDocument> docs = templates.stream()
+                        .map(t -> BookingDocument.builder().booking(booking).documentTemplate(t).build())
+                        .toList();
+                bookingDocumentRepository.saveAll(docs);
+                log.info("Created {} documents for booking {}", docs.size(), booking.getId());
+            }
+        }
     }
 
     @Override
     @Transactional
-    public List<BookingDocumentResponse> getForBooking(Long bookingId) {
-        List<BookingDocument> docs = bookingDocumentRepository.findByBookingId(bookingId);
-        return docs.stream()
-                .map(this::toResponse)
-                .toList();
+    public void sendDocumentEmail(Booking booking) {
+        List<BookingDocument> docs = bookingDocumentRepository.findByBookingId(booking.getId())
+                .stream().filter(d -> !Boolean.TRUE.equals(d.getArchived())).toList();
+
+        emailService.sendDocuments(booking, docs);
+
+        LocalDateTime now = LocalDateTime.now();
+        docs.forEach(d -> d.setEmailSentAt(now));
+        bookingDocumentRepository.saveAll(docs);
     }
 
     @Override
@@ -57,18 +61,24 @@ public class BookingDocumentServiceImpl implements BookingDocumentService {
         if (docs.isEmpty()) return;
         docs.forEach(d -> d.setArchived(true));
         bookingDocumentRepository.saveAll(docs);
-        log.info("Архивированы {} документов для бронирования {}", docs.size(), bookingId);
+        log.info("Archived {} documents for booking {}", docs.size(), bookingId);
+    }
+
+    @Override
+    @Transactional
+    public List<BookingDocumentResponse> getForBooking(Long bookingId) {
+        return bookingDocumentRepository.findByBookingId(bookingId).stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     private BookingDocumentResponse toResponse(BookingDocument doc) {
         DocumentTemplate tmpl = doc.getDocumentTemplate();
         Booking booking = doc.getBooking();
-        String eventTitle = booking.getEvent() != null ? booking.getEvent().getTitle() : null;
-
         return BookingDocumentResponse.builder()
                 .id(doc.getId())
                 .bookingId(booking.getId())
-                .eventTitle(eventTitle)
+                .eventTitle(booking.getEvent() != null ? booking.getEvent().getTitle() : null)
                 .templateId(tmpl != null ? tmpl.getId() : null)
                 .templateName(tmpl != null ? tmpl.getName() : null)
                 .templateDescription(tmpl != null ? tmpl.getDescription() : null)
@@ -82,6 +92,7 @@ public class BookingDocumentServiceImpl implements BookingDocumentService {
                 .signerName(doc.getSignerName())
                 .signedAt(doc.getSignedAt())
                 .filledData(doc.getFilledData())
+                .emailSentAt(doc.getEmailSentAt())
                 .build();
     }
 }

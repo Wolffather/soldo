@@ -2,6 +2,7 @@ package ru.savvy.soldo.document.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import ru.savvy.soldo.event.model.Event;
 import java.time.LocalDateTime;
 
 @Entity
@@ -24,7 +25,11 @@ public class DocumentTemplate {
     @Column(name = "file_url")
     private String fileUrl;
 
-    @Column(name = "category_format", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "event_id")
+    private Event event;
+
+    @Column(name = "category_format")
     private String categoryFormat;
 
     @Column(name = "is_required")
