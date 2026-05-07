@@ -3,12 +3,14 @@ package ru.savvy.soldo.shared.email;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.Resource;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 import ru.savvy.soldo.booking.model.Booking;
 import ru.savvy.soldo.booking.model.BookingDocument;
 import ru.savvy.soldo.document.model.DocumentTemplate;
+import ru.savvy.soldo.document.service.FileStorageService;
 import ru.savvy.soldo.shared.settings.AppSettingsService;
 
 import java.util.List;
@@ -20,6 +22,7 @@ import java.util.Properties;
 public class EmailServiceImpl implements EmailService {
 
     private final AppSettingsService settings;
+    private final FileStorageService fileStorageService;
 
     @Override
     public void sendDocuments(Booking booking, List<BookingDocument> documents) {
@@ -45,16 +48,27 @@ public class EmailServiceImpl implements EmailService {
         }
 
         String from = settings.get("mail.from", "noreply@example.com");
-        String publicUrl = settings.get("app.public-url", "http://localhost:8080");
 
         try {
             JavaMailSenderImpl mailSender = buildMailSender();
             MimeMessage msg = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(msg, false, "UTF-8");
+            MimeMessageHelper helper = new MimeMessageHelper(msg, true, "UTF-8");
             helper.setFrom(from);
             helper.setTo(email);
             helper.setSubject("Документы для участия: " + booking.getEvent().getTitle());
-            helper.setText(buildHtml(booking, withTemplate, publicUrl), true);
+            helper.setText(buildHtml(booking, withTemplate), true);
+
+            for (BookingDocument bd : withTemplate) {
+                DocumentTemplate t = bd.getDocumentTemplate();
+                try {
+                    Resource file = fileStorageService.loadAsResource(t.getFileUrl());
+                    String attachmentName = t.getName() + getExtension(t.getFileUrl());
+                    helper.addAttachment(attachmentName, file);
+                } catch (Exception e) {
+                    log.warn("Could not attach file {} for booking {}: {}", t.getFileUrl(), booking.getId(), e.getMessage());
+                }
+            }
+
             mailSender.send(msg);
             log.info("Document email sent to {} for booking {}", email, booking.getId());
         } catch (Exception e) {
@@ -77,21 +91,19 @@ public class EmailServiceImpl implements EmailService {
         return sender;
     }
 
-    private String buildHtml(Booking booking, List<BookingDocument> documents, String publicUrl) {
+    private String buildHtml(Booking booking, List<BookingDocument> documents) {
         StringBuilder sb = new StringBuilder();
         sb.append("<div style=\"font-family:sans-serif;max-width:600px;margin:0 auto;\">");
         sb.append("<h2 style=\"color:#2563eb;\">").append(escape(booking.getEvent().getTitle())).append("</h2>");
         sb.append("<p>Здравствуйте, <strong>").append(escape(booking.getGuestName())).append("</strong>!</p>");
-        sb.append("<p>Ваше бронирование подтверждено. Пожалуйста, ознакомьтесь с документами ниже");
-        sb.append(" и при необходимости подпишите их.</p>");
+        sb.append("<p>Ваше бронирование подтверждено. Документы для участия прикреплены к этому письму.");
+        sb.append(" Пожалуйста, ознакомьтесь с ними и при необходимости подпишите.</p>");
         sb.append("<ul style=\"padding-left:20px;\">");
 
         for (BookingDocument bd : documents) {
             DocumentTemplate t = bd.getDocumentTemplate();
-            String fileLink = publicUrl + "/files/" + t.getFileUrl();
             sb.append("<li style=\"margin-bottom:8px;\">");
-            sb.append("<a href=\"").append(fileLink).append("\" style=\"color:#2563eb;\">")
-              .append(escape(t.getName())).append("</a>");
+            sb.append("<strong>").append(escape(t.getName())).append("</strong>");
             if (Boolean.TRUE.equals(t.getRequiresSignature())) {
                 sb.append(" <span style=\"color:#6b7280;font-size:0.875em;\">(требует подписи)</span>");
             }
@@ -107,6 +119,11 @@ public class EmailServiceImpl implements EmailService {
         sb.append("<p style=\"color:#6b7280;font-size:0.875em;\">Если у вас есть вопросы, ответьте на это письмо.</p>");
         sb.append("</div>");
         return sb.toString();
+    }
+
+    private static String getExtension(String filename) {
+        int dot = filename.lastIndexOf('.');
+        return dot >= 0 ? filename.substring(dot) : "";
     }
 
     private static String escape(String s) {
