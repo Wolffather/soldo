@@ -21,6 +21,8 @@ public interface BookingService {
 
     BookingResponse cancel(Long id);
 
+    void delete(Long id);
+
     BookingResponse updatePayment(Long id, PaymentUpdateRequest request);
 
     BigDecimal getMonthlyRevenue();

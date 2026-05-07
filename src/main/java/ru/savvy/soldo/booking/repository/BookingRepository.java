@@ -12,7 +12,7 @@ import java.util.List;
 
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
-    @Query("SELECT b FROM Booking b JOIN FETCH b.event WHERE b.event.id = :eventId")
+    @Query("SELECT b FROM Booking b JOIN FETCH b.event LEFT JOIN FETCH b.priceOption WHERE b.event.id = :eventId")
     List<Booking> findByEventId(@Param("eventId") Long eventId);
 
     long countByEventIdAndCancelledFalse(Long eventId);

@@ -121,7 +121,7 @@ public class WidgetServiceImpl implements WidgetService {
                 .build();
 
         booking = bookingRepository.save(booking);
-        summaryRepository.onCreateConfirmed(event.getId());
+        summaryRepository.findByEventId(event.getId()).ifPresent(s -> summaryRepository.refreshSummary(event.getId()));
 
         bookingDocumentService.createDocumentsForBooking(booking);
         try {
@@ -187,7 +187,6 @@ public class WidgetServiceImpl implements WidgetService {
                 .startDate(b.getEvent().getStartDate())
                 .endDate(b.getEvent().getEndDate())
                 .amountDue(b.getAmountDue())
-                .status(b.getStatus().name())
                 .successMessage(successMessage)
                 .build();
     }

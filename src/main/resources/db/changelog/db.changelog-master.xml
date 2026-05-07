@@ -30,5 +30,6 @@
     <include file="db/changelog/init/006-app-settings.xml"/>
     <include file="db/changelog/init/007-event-price-options.xml"/>
     <include file="db/changelog/init/008-simplify-schema.xml"/>
+    <include file="db/changelog/init/009-refresh-summary.xml"/>
 
 </databaseChangeLog>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <!-- Пересчитать сводку из реальных данных (замена старых инкрементальных функций) -->
+    <changeSet id="009-refresh-all-summaries" author="savvy">
+        <sql splitStatements="false">
+            UPDATE event_bookings_summary s
+            SET
+                total_bookings     = (SELECT COUNT(*) FROM bookings b WHERE b.event_id = s.event_id),
+                confirmed_bookings = (SELECT COUNT(*) FROM bookings b WHERE b.event_id = s.event_id AND b.cancelled = false),
+                cancelled_bookings = (SELECT COUNT(*) FROM bookings b WHERE b.event_id = s.event_id AND b.cancelled = true),
+                pending_bookings   = 0,
+                num_of_participants = GREATEST(0, COALESCE(
+                    (SELECT e.max_participants FROM events e WHERE e.id = s.event_id) -
+                    (SELECT COUNT(*) FROM bookings b WHERE b.event_id = s.event_id AND b.cancelled = false),
+                    0
+                )),
+                last_updated = NOW()
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>

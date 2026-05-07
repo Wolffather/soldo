@@ -8,7 +8,6 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import ru.savvy.soldo.shared.exception.ErrorResponse;
 
 import java.util.LinkedHashMap;
@@ -86,12 +85,6 @@ public class GlobalExceptionHandler {
     }
 
     // ─── 409 Conflict ─────────────────────────────────────
-
-    @ExceptionHandler(RoleAlreadyExistsException.class)
-    public ResponseEntity<ErrorResponse> handleRoleExists(
-            RoleAlreadyExistsException ex) {
-        return buildResponse(HttpStatus.CONFLICT, "Конфликт данных", ex);
-    }
 
     @ExceptionHandler(DataDuplicationException.class)
     public ResponseEntity<ErrorResponse> handleDuplicate(

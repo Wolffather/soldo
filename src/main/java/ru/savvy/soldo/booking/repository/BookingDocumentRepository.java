@@ -1,6 +1,7 @@
 package ru.savvy.soldo.booking.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import ru.savvy.soldo.booking.model.BookingDocument;
@@ -10,6 +11,10 @@ import java.util.List;
 public interface BookingDocumentRepository extends JpaRepository<BookingDocument, Long> {
 
     List<BookingDocument> findByBookingId(Long bookingId);
+
+    @Modifying
+    @Query("DELETE FROM BookingDocument d WHERE d.booking.id = :bookingId")
+    void deleteByBookingId(@Param("bookingId") Long bookingId);
 
     List<BookingDocument> findByBookingIdIn(List<Long> bookingIds);
 

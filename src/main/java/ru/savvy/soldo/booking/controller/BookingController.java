@@ -49,6 +49,13 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.getMonthlyRevenue());
     }
 
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        bookingService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
+
     @PatchMapping("/{id}/cancel")
     public ResponseEntity<BookingResponse> cancel(@PathVariable Long id) {
         return ResponseEntity.ok(bookingService.cancel(id));

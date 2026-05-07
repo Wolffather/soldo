@@ -162,12 +162,9 @@ public class EventServiceImpl implements EventService {
     }
 
     private void updateSummary(Event event) {
-        summaryRepository.findByEventId(event.getId()).ifPresent(summary -> {
-            if (event.getMaxParticipants() != null) {
-                long occupied = summary.getConfirmedBookings() + summary.getPendingBookings();
-                summary.setNumOfParticipants((int) (event.getMaxParticipants() - occupied));
-                summaryRepository.save(summary);
-            }
-        });
+        if (event.getMaxParticipants() != null) {
+            summaryRepository.findByEventId(event.getId())
+                    .ifPresent(s -> summaryRepository.refreshSummary(event.getId()));
+        }
     }
 }

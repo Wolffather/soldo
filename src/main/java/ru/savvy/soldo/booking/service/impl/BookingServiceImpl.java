@@ -85,7 +85,7 @@ public class BookingServiceImpl implements BookingService {
                 .build();
 
         booking = bookingRepository.save(booking);
-        summaryRepository.onCreateConfirmed(event.getId());
+        summaryRepository.findByEventId(event.getId()).ifPresent(s -> summaryRepository.refreshSummary(event.getId()));
 
         bookingDocumentService.createDocumentsForBooking(booking);
         if (booking.getGuestEmail() != null && !booking.getGuestEmail().isBlank()) {
@@ -96,6 +96,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<BookingResponse> getByEventId(Long eventId) {
         return bookingRepository.findByEventId(eventId).stream()
                 .map(this::toResponse)
@@ -129,9 +130,22 @@ public class BookingServiceImpl implements BookingService {
         booking = bookingRepository.save(booking);
 
         bookingDocumentService.archiveDocumentsForBooking(booking.getId());
-        summaryRepository.onCancelFromConfirmed(booking.getEvent().getId());
+        Booking finalBooking = booking;
+        summaryRepository.findByEventId(booking.getEvent().getId()).ifPresent(s -> summaryRepository.refreshSummary(finalBooking.getEvent().getId()));
 
         return toResponse(booking);
+    }
+
+    @Override
+    @Transactional
+    public void delete(Long id) {
+        Booking booking = EntityFinder.findOrThrow(bookingRepository.findById(id), "Бронирование не найдено: " + id);
+        Long eventId = booking.getEvent().getId();
+
+        bookingDocumentRepository.deleteByBookingId(id);
+        bookingRepository.delete(booking);
+
+        summaryRepository.findByEventId(eventId).ifPresent(s -> summaryRepository.refreshSummary(eventId));
     }
 
     @Override
@@ -170,7 +184,6 @@ public class BookingServiceImpl implements BookingService {
                 .guestEmail(b.getGuestEmail())
                 .eventId(b.getEvent().getId())
                 .eventTitle(b.getEvent().getTitle())
-                .categoryFormat(null)
                 .status(b.isCancelled() ? "CANCELLED" : "CONFIRMED")
                 .paymentStatus(b.getPaymentStatus() != null ? b.getPaymentStatus().name() : null)
                 .amountDue(b.getAmountDue())
