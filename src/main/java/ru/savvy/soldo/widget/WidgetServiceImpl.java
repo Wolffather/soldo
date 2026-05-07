@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.savvy.soldo.booking.model.Booking;
-import ru.savvy.soldo.booking.model.BookingStatus;
 import ru.savvy.soldo.booking.model.PaymentStatus;
 import ru.savvy.soldo.booking.repository.BookingRepository;
 import ru.savvy.soldo.booking.repository.EventBookingSummaryRepository;
@@ -115,7 +114,6 @@ public class WidgetServiceImpl implements WidgetService {
                 .guestPhone(req.getGuestPhone())
                 .guestEmail(req.getGuestEmail())
                 .notes(req.getNotes())
-                .status(BookingStatus.CONFIRMED)
                 .paymentStatus(paymentStatus)
                 .amountDue(amountDue)
                 .paymentDeadline(paymentDeadline)

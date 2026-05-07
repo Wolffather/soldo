@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+            http://www.liquibase.org/xml/ns/dbchangelog
+            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.9.xsd">
+
+    <!-- ═══ 1. Удаление неиспользуемых таблиц ═══════════════════════════ -->
+
+    <changeSet id="008-drop-event-categories" author="savvy">
+        <dropTable tableName="event_categories" cascadeConstraints="true"/>
+    </changeSet>
+
+    <changeSet id="008-drop-inquiries" author="savvy">
+        <dropTable tableName="inquiries" cascadeConstraints="true"/>
+    </changeSet>
+
+    <changeSet id="008-drop-participant-profiles" author="savvy">
+        <dropTable tableName="participant_profiles" cascadeConstraints="true"/>
+    </changeSet>
+
+    <changeSet id="008-drop-users" author="savvy">
+        <dropTable tableName="users" cascadeConstraints="true"/>
+    </changeSet>
+
+    <!-- ═══ 2. Упрощение таблицы бронирований ═══════════════════════════ -->
+
+    <changeSet id="008-bookings-add-cancelled" author="savvy">
+        <addColumn tableName="bookings">
+            <column name="cancelled" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <!-- Перенести отменённые бронирования -->
+        <sql>UPDATE bookings SET cancelled = TRUE WHERE status = 'CANCELLED'</sql>
+    </changeSet>
+
+    <changeSet id="008-bookings-drop-status" author="savvy">
+        <dropColumn tableName="bookings" columnName="status"/>
+    </changeSet>
+
+</databaseChangeLog>

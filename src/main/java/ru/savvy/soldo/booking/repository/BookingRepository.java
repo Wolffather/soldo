@@ -4,7 +4,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import ru.savvy.soldo.booking.model.Booking;
-import ru.savvy.soldo.booking.model.BookingStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -16,11 +15,11 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("SELECT b FROM Booking b JOIN FETCH b.event WHERE b.event.id = :eventId")
     List<Booking> findByEventId(@Param("eventId") Long eventId);
 
-    List<Booking> findByEventIdAndStatus(Long eventId, BookingStatus status);
+    long countByEventIdAndCancelledFalse(Long eventId);
 
     @Query("SELECT b FROM Booking b JOIN FETCH b.event " +
            "WHERE b.paymentStatus = 'PENDING' " +
-           "AND b.paymentDeadline <= :deadline AND b.status = ru.savvy.soldo.booking.model.BookingStatus.CONFIRMED")
+           "AND b.paymentDeadline <= :deadline AND b.cancelled = false")
     List<Booking> findUnpaidWithDeadlineBefore(@Param("deadline") LocalDate deadline);
 
     @Query("SELECT COALESCE(SUM(b.amountPaid), 0) FROM Booking b " +

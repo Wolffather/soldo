@@ -3,8 +3,10 @@ package ru.savvy.soldo.event.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.savvy.soldo.booking.repository.BookingRepository;
 import ru.savvy.soldo.event.dto.EventDTO;
 import ru.savvy.soldo.event.dto.EventPriceOptionDTO;
+import ru.savvy.soldo.shared.exception.ForbiddenOperationException;
 import ru.savvy.soldo.shared.exception.NotFoundException;
 import ru.savvy.soldo.event.mapper.EventMapper;
 import ru.savvy.soldo.event.model.Event;
@@ -30,6 +32,7 @@ public class EventServiceImpl implements EventService {
     private final EventRepository eventRepository;
     private final EventBookingSummaryRepository summaryRepository;
     private final EventPriceOptionRepository priceOptionRepository;
+    private final BookingRepository bookingRepository;
     private final EventMapper mapper;
 
     @Override
@@ -104,6 +107,12 @@ public class EventServiceImpl implements EventService {
     public void delete(Long id) {
         if (!eventRepository.existsById(id)) {
             throw new NotFoundException("Событие не найдено: " + id);
+        }
+        long activeBookings = bookingRepository.countByEventIdAndCancelledFalse(id);
+        if (activeBookings > 0) {
+            throw new ForbiddenOperationException(
+                "Невозможно удалить событие: к нему привязано " + activeBookings +
+                " активных бронирований. Сначала отмените все бронирования.");
         }
         summaryRepository.findByEventId(id).ifPresent(summaryRepository::delete);
         priceOptionRepository.deleteByEventId(id);

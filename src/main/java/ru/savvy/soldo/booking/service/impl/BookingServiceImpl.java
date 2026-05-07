@@ -15,7 +15,6 @@ import ru.savvy.soldo.shared.exception.NotFoundException;
 import ru.savvy.soldo.booking.model.Booking;
 import ru.savvy.soldo.event.model.Event;
 import ru.savvy.soldo.booking.model.EventBookingsSummary;
-import ru.savvy.soldo.booking.model.BookingStatus;
 import ru.savvy.soldo.booking.model.PaymentStatus;
 import ru.savvy.soldo.booking.repository.BookingRepository;
 import ru.savvy.soldo.booking.repository.EventBookingSummaryRepository;
@@ -72,14 +71,11 @@ public class BookingServiceImpl implements BookingService {
             paymentDeadline = LocalDate.now().plusDays(7);
         }
 
-        BookingStatus status = request.getStatus() != null ? request.getStatus() : BookingStatus.CONFIRMED;
-
         Booking booking = Booking.builder()
                 .event(event)
                 .guestName(request.getGuestName())
                 .guestPhone(request.getGuestPhone())
                 .guestEmail(request.getGuestEmail())
-                .status(status)
                 .paymentStatus(paymentStatus)
                 .amountDue(amountDue)
                 .paymentDeadline(paymentDeadline)
@@ -89,11 +85,7 @@ public class BookingServiceImpl implements BookingService {
                 .build();
 
         booking = bookingRepository.save(booking);
-
-        switch (status) {
-            case BookingStatus.PENDING   -> summaryRepository.onCreatePending(event.getId());
-            case BookingStatus.CONFIRMED -> summaryRepository.onCreateConfirmed(event.getId());
-        }
+        summaryRepository.onCreateConfirmed(event.getId());
 
         bookingDocumentService.createDocumentsForBooking(booking);
         if (booking.getGuestEmail() != null && !booking.getGuestEmail().isBlank()) {
@@ -126,51 +118,18 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     @Transactional
-    public BookingResponse confirm(Long id) {
-        Booking booking = EntityFinder.findOrThrow(bookingRepository.findById(id), "Бронирование не найдено: " + id);
-
-        if (!BookingStatus.PENDING.equals(booking.getStatus())) {
-            throw new IllegalOperationException("Можно подтвердить только бронирование в статусе PENDING");
-        }
-
-        booking.setStatus(BookingStatus.CONFIRMED);
-        booking = bookingRepository.save(booking);
-        summaryRepository.onConfirm(booking.getEvent().getId());
-
-        notifyBooker(booking,
-                String.format("✅ Ваше бронирование на <b>%s</b> подтверждено!",
-                              booking.getEvent().getTitle()));
-
-        return toResponse(booking);
-    }
-
-    @Override
-    @Transactional
     public BookingResponse cancel(Long id) {
         Booking booking = EntityFinder.findOrThrow(bookingRepository.findById(id), "Бронирование не найдено: " + id);
 
-        if (BookingStatus.CANCELLED.equals(booking.getStatus())) {
+        if (booking.isCancelled()) {
             throw new IllegalOperationException("Бронирование уже отменено");
         }
 
-        BookingStatus previousStatus = booking.getStatus();
-        Long eventId = booking.getEvent().getId();
-
-        booking.setStatus(BookingStatus.CANCELLED);
+        booking.setCancelled(true);
         booking = bookingRepository.save(booking);
 
-        // Архивируем документы при отмене
         bookingDocumentService.archiveDocumentsForBooking(booking.getId());
-
-        if (previousStatus == BookingStatus.CONFIRMED) {
-            summaryRepository.onCancelFromConfirmed(eventId);
-        } else if (previousStatus == BookingStatus.PENDING) {
-            summaryRepository.onCancelFromPending(eventId);
-        }
-
-        notifyBooker(booking,
-                String.format("❌ Ваше бронирование на <b>%s</b> отменено.",
-                              booking.getEvent().getTitle()));
+        summaryRepository.onCancelFromConfirmed(booking.getEvent().getId());
 
         return toResponse(booking);
     }
@@ -212,7 +171,7 @@ public class BookingServiceImpl implements BookingService {
                 .eventId(b.getEvent().getId())
                 .eventTitle(b.getEvent().getTitle())
                 .categoryFormat(null)
-                .status(String.valueOf(b.getStatus()))
+                .status(b.isCancelled() ? "CANCELLED" : "CONFIRMED")
                 .paymentStatus(b.getPaymentStatus() != null ? b.getPaymentStatus().name() : null)
                 .amountDue(b.getAmountDue())
                 .amountPaid(b.getAmountPaid())

@@ -49,11 +49,6 @@ public class BookingController {
         return ResponseEntity.ok(bookingService.getMonthlyRevenue());
     }
 
-    @PatchMapping("/{id}/confirm")
-    public ResponseEntity<BookingResponse> confirm(@PathVariable Long id) {
-        return ResponseEntity.ok(bookingService.confirm(id));
-    }
-
     @PatchMapping("/{id}/cancel")
     public ResponseEntity<BookingResponse> cancel(@PathVariable Long id) {
         return ResponseEntity.ok(bookingService.cancel(id));

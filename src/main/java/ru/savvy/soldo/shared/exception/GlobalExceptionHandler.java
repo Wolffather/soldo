@@ -62,6 +62,12 @@ public class GlobalExceptionHandler {
 
     // ─── 403 Forbidden ────────────────────────────────────
 
+    @ExceptionHandler(ForbiddenOperationException.class)
+    public ResponseEntity<ErrorResponse> handleForbidden(
+            ForbiddenOperationException ex) {
+        return buildResponse(HttpStatus.FORBIDDEN, "Операция запрещена", ex);
+    }
+
     /**
      * Нет прав доступа (Spring Security AccessDeniedException)
      */

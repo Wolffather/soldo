@@ -29,5 +29,6 @@
     <include file="db/changelog/init/005-document-email.xml"/>
     <include file="db/changelog/init/006-app-settings.xml"/>
     <include file="db/changelog/init/007-event-price-options.xml"/>
+    <include file="db/changelog/init/008-simplify-schema.xml"/>
 
 </databaseChangeLog>

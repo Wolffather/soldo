@@ -2,7 +2,6 @@ package ru.savvy.soldo.booking.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import ru.savvy.soldo.booking.model.BookingStatus;
 import ru.savvy.soldo.booking.model.PaymentStatus;
 import ru.savvy.soldo.event.model.Event;
 import ru.savvy.soldo.event.model.EventPriceOption;
@@ -37,10 +36,9 @@ public class Booking {
     @JoinColumn(name = "event_id", nullable = false)
     private Event event;
 
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
-    private BookingStatus status = BookingStatus.PENDING;
+    private boolean cancelled = false;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_status")

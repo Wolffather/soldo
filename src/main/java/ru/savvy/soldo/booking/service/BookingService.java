@@ -19,8 +19,6 @@ public interface BookingService {
 
     List<BookingSummaryResponse> getAllSummaries();
 
-    BookingResponse confirm(Long id);
-
     BookingResponse cancel(Long id);
 
     BookingResponse updatePayment(Long id, PaymentUpdateRequest request);
