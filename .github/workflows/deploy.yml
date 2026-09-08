@@ -21,8 +21,7 @@ jobs:
 
       - name: Start PostgreSQL and app with Docker Compose
         run: |
-          docker compose -f docker-compose.yml up -d
-          # Ждём, пока приложение поднимется (можно заменить на curl healthcheck)
+          docker compose -f docker-compose.yaml up -d
           sleep 15
 
       # === Юнит и интеграционные тесты ===
