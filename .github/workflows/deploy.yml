@@ -6,13 +6,38 @@ on:
       - main
 
 jobs:
-  deploy:
+  test-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      # === Юнит и интеграционные тесты ===
+      - name: Run tests
+        run: ./mvnw clean test
+
+      # === Нагрузочные тесты (запускаем, но не блокируем деплой) ===
+      - name: Run load tests
+        run: ./mvnw gatling:test || true
+        continue-on-error: true   # чтобы не блокировать деплой, если нагрузка упала
+
+      # === Сохраняем отчёт о нагрузке как артефакт ===
+      - name: Upload Gatling report
+        uses: actions/upload-artifact@v4
+        with:
+          name: gatling-report
+          path: target/gatling/
+
+      # === Деплой (если тесты прошли) ===
       - name: Deploy to server
+        if: success()
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SSH_HOST }}

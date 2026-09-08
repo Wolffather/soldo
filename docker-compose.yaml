@@ -1,0 +1,28 @@
+services:
+  postgres:
+    image: postgres:14.8
+    container_name: postgres
+    environment:
+      POSTGRES_DB: soldo
+      POSTGRES_USER: app_user
+      POSTGRES_PASSWORD: app_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+  app:
+    build: .
+    container_name: soldo-app
+    depends_on:
+      - postgres
+    environment:
+      JAVA_TOOL_OPTIONS: "-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=9010 -Dcom.sun.management.jmxremote.rmi.port=9010 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=localhost"
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/soldo
+      SPRING_DATASOURCE_USERNAME: app_user
+      SPRING_DATASOURCE_PASSWORD: app_pass
+    ports:
+      - "8080:8080"
+      - "9010:9010"
+
+volumes:
+  postgres_data:
